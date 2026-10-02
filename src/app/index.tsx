@@ -8,7 +8,6 @@ import * as Device from "expo-device";
 import { useRouter } from "expo-router";
 import { Alert, Button, Platform, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 //funcion auxiliar que permite adaptar la pantalla segun sea web o celular
 function getDevMenuHint() {
   if (Platform.OS === "web") {
@@ -45,16 +44,15 @@ export default function HomeScreen() {
     Alert.alert("Permiso de SMS", "¿Autorizas el análisis de tus mensajes?", [
       {
         text: "Cancelar",
-        onPress: () =>
-          Alert.alert(
-            "No concedido",
-            "Has rechazado el permiso para leer SMS.",
-          ),
+        onPress: () => Alert.alert("No concedido", "Has rechazado el permiso."),
       },
       {
         text: "Aceptar",
-        onPress: () =>
-          Alert.alert("Concedido", "El radar antifraude está activado."),
+        // 3. Al tener DOS acciones, usamos las llaves { }
+        onPress: () => {
+          Alert.alert("Concedido", "El radar antifraude está activado.");
+          router.replace("/(tabs)/bandejaMensaje");
+        },
       },
     ]);
   };
