@@ -1,199 +1,233 @@
-import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
-import { Platform, Pressable, ScrollView, StyleSheet } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ExternalLink } from "@/components/external-link";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Collapsible } from "@/components/ui/collapsible";
-import { WebBadge } from "@/components/web-badge";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-  const theme = useTheme();
-
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+export default function UnknownNumberScreen() {
+  const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}
-    >
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{"\n"}code to help you get started.
-          </ThemedText>
+    <View style={styles.screenContainer}>
+      {/* Header Superior */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <Pressable style={styles.backButton}>
+          <SymbolView
+            name={{ ios: "chevron.left", android: "arrow_back", web: "arrow_back" }}
+            tintColor="#FFFFFF"
+            size={22}
+          />
+        </Pressable>
+        <Text style={styles.headerTitle}>Número desconocido</Text>
+      </View>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{
-                    ios: "arrow.up.right.square",
-                    android: "link",
-                    web: "link",
-                  }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: insets.bottom + 24 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Card del Mensaje SOSPECHOSO */}
+        <View style={styles.messageCard}>
+          <Text style={styles.messageTitle}>Número desconocido</Text>
+          <Text style={styles.messageBody}>
+            Tu cuenta será suspendida hoy. Haz clic en el enlace de aquí para verificar:
+          </Text>
+        </View>
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens:{" "}
-              <ThemedText type="code">src/app/index.tsx</ThemedText> and{" "}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in{" "}
-              <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+        {/* Sección Score de Riesgo */}
+        <View style={styles.riskSection}>
+          <Text style={styles.sectionLabel}>Score de riesgo:</Text>
+          <View style={styles.scoreRow}>
+            <Text style={styles.scoreValue}>9/10</Text>
+            <Text style={styles.scoreBadgeText}>ALTO RIESGO</Text>
+          </View>
+        </View>
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView
-              type="backgroundElement"
-              style={styles.collapsibleContent}
-            >
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open
-                the web version, press{" "}
-                <ThemedText type="smallBold">w</ThemedText> in the terminal
-                running this project.
-              </ThemedText>
-              <Image
-                source={require("@/assets/images/tutorial-web.png")}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
+        {/* Sección Por qué es peligroso */}
+        <View style={styles.reasonsSection}>
+          <Text style={styles.sectionTitle}>Por qué es peligroso:</Text>
+          <View style={styles.bulletList}>
+            <Text style={styles.bulletItem}>
+              • Enlace sospechoso (dominio reciente)
+            </Text>
+            <Text style={styles.bulletItem}>• Patrón de estafa conocido</Text>
+            <Text style={styles.bulletItem}>• Solicita acción urgente</Text>
+          </View>
+        </View>
 
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the{" "}
-              <ThemedText type="code">@2x</ThemedText> and{" "}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files
-              for different screen densities.
-            </ThemedText>
-            <Image
-              source={require("@/assets/images/react-logo.png")}
-              style={styles.imageReact}
-            />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+        {/* Sección Recomendación Clara */}
+        <View style={styles.recommendationSection}>
+          <Text style={styles.recommendationLabel}>RECOMENDACIÓN CLARA</Text>
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningText}>
+              No hagas clic.{"\n"}Elimina el mensaje.
+            </Text>
+          </View>
+        </View>
 
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{" "}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets
-              you inspect what the user&apos;s current color scheme is, and so
-              you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+        {/* Botones de Acción */}
+        <View style={styles.actionButtonsContainer}>
+          <Pressable style={styles.primaryButton}>
+            <Text style={styles.primaryButtonText}>REPORTAR ESTAFA</Text>
+          </Pressable>
 
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{" "}
-              <ThemedText type="code">
-                src/components/ui/collapsible.tsx
-              </ThemedText>{" "}
-              component uses the powerful{" "}
-              <ThemedText type="code">react-native-reanimated</ThemedText>{" "}
-              library to animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === "web" && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+          <Pressable style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>BORRAR MENSAJE</Text>
+          </Pressable>
+
+          <Pressable style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>
+              HABLAR CON EL ASISTENTE
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  header: {
+    backgroundColor: "#082A24",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  backButton: {
+    marginRight: 16,
+    padding: 4,
+  },
+  headerTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+  },
   scrollView: {
     flex: 1,
   },
   contentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    gap: 20,
+  },
+  messageCard: {
+    backgroundColor: "#E3E9E5",
+    borderRadius: 16,
+    padding: 16,
+    gap: 6,
+  },
+  messageTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  messageBody: {
+    fontSize: 15,
+    color: "#374151",
+    lineHeight: 22,
+  },
+  riskSection: {
+    gap: 4,
+  },
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  scoreRow: {
     flexDirection: "row",
+    alignItems: "baseline",
+    gap: 12,
+  },
+  scoreValue: {
+    fontSize: 44,
+    fontWeight: "900",
+    color: "#8B0000",
+  },
+  scoreBadgeText: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#8B0000",
+    letterSpacing: 0.5,
+  },
+  reasonsSection: {
+    gap: 6,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  bulletList: {
+    paddingLeft: 4,
+    gap: 4,
+  },
+  bulletItem: {
+    fontSize: 15,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  recommendationSection: {
+    gap: 8,
+    marginTop: 4,
+  },
+  recommendationLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1F2937",
+    letterSpacing: 0.5,
+  },
+  warningBanner: {
+    backgroundColor: "#F5B800",
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    alignItems: "center",
     justifyContent: "center",
   },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
-    alignItems: "center",
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
-  },
-  centerText: {
+  warningText: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#111827",
     textAlign: "center",
+    lineHeight: 28,
   },
-  pressed: {
-    opacity: 0.7,
+  actionButtonsContainer: {
+    gap: 12,
+    marginTop: 8,
   },
-  linkButton: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
+  primaryButton: {
+    backgroundColor: "#082A24",
+    borderRadius: 30,
+    paddingVertical: 14,
+    alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.one,
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  secondaryButton: {
+    backgroundColor: "#E3E9E5",
+    borderColor: "#D0D7D3",
+    borderWidth: 1,
+    borderRadius: 30,
+    paddingVertical: 14,
     alignItems: "center",
+    justifyContent: "center",
   },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: "center",
-  },
-  imageTutorial: {
-    width: "100%",
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: "center",
+  secondaryButtonText: {
+    color: "#1F2937",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
 });
