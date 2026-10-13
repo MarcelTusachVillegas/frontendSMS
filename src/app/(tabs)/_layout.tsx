@@ -1,17 +1,21 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router";
-import { useColorScheme } from "react-native";
-
-import { AnimatedSplashOverlay } from "@/components/animated-icon";
-import AppTabs from "@/components/app-tabs";
-
-//SplashScreen.preventAutoHideAsync();
+import { Tabs } from "expo-router";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        // Si deseas ocultar la barra en TODAS las pestañas:
+        tabBarStyle: { display: "none" },
+      }}
+    >
+      <Tabs.Screen
+        name="bandejaMensaje"
+        options={{
+          // O si deseas ocultarla SOLO en esta pestaña:
+          tabBarStyle: { display: "none" },
+        }}
+      />
+    </Tabs>
   );
 }

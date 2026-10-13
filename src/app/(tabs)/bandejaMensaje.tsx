@@ -1,45 +1,56 @@
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const mensajes = [
-  {
-    id: 1,
-    remitente: "Banco Estado",
-    texto: "Tu pago de $45.200 fue procesado correctamente. ¿No lo reconoces?",
-    tiempo: "09:12",
-    estado: "Seguro",
-    riesgo: "seguro",
-  },
-  {
-    id: 2,
-    remitente: "Número desconocido",
-    texto: "Tu cuents será suspendids hoy. Haz para verificar:",
-    tiempo: "Hoy 08:45",
-    estado: "FRAUDE",
-    riesgo: "fraude",
-  },
-  {
-    id: 3,
-    remitente: "DHL Chile",
-    texto: "Tu envío DHL73324 está Actualiza tus datos para entregar.",
-    tiempo: "Ayer",
-    estado: "Sospechoso",
-    riesgo: "sospechoso",
-  },
-  {
-    id: 4,
-    remitente: "Cencosud",
-    texto: "Tu boleta #13394 está disponible. tu monto mensual.",
-    tiempo: "Ayer 16:20",
-    estado: "Seguro",
-    riesgo: "seguro",
-  },
-];
+// Interfaz TypeScript para la estructura de SMS reales
+export interface MensajeSMS {
+  id: string;
+  remitente: string;
+  texto: string;
+  tiempo: string;
+  estado: "Seguro" | "FRAUDE" | "Sospechoso";
+  riesgo: "seguro" | "fraude" | "sospechoso";
+}
 
 export default function BandejaMensaje() {
+  const router = useRouter();
+
+  // Estado que recibirá los SMS reales
+  const [mensajes, setMensajes] = useState<MensajeSMS[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Manejo de botones de la cabecera
+  const handleNotificationsPress = () => {
+    // Ejemplo de navegación o alerta temporal:
+    // router.push("/notificaciones");
+    Alert.alert("Notificaciones", "No tienes notificaciones pendientes.");
+  };
+
+  const handleProfilePress = () => {
+    // Ejemplo de navegación a la configuración del usuario:
+    // router.push("/configuracion");
+    Alert.alert("Configuración", "Redirigiendo a la configuración de usuario...");
+  };
+
+  // Filtrado en tiempo real según la búsqueda
+  const mensajesFiltrados = mensajes.filter(
+    (msg) =>
+      msg.remitente.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      msg.texto.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Cabecera */}
+      {/* Cabecera con Botones Activos */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
           <Text style={{ color: "#0d47a1", fontWeight: "bold" }}>
@@ -48,28 +59,58 @@ export default function BandejaMensaje() {
           SMS
         </Text>
         <View style={styles.headerIcons}>
-          <Text style={[styles.iconSpaced, { fontSize: 20 }]}>🔔</Text>
-          <Text style={{ fontSize: 24 }}>👤</Text>
+          <TouchableOpacity
+            onPress={handleNotificationsPress}
+            activeOpacity={0.7}
+            style={styles.iconSpaced}
+          >
+            <Text style={{ fontSize: 22 }}>🔔</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleProfilePress}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 24 }}>👤</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Buscador */}
+      {/* Buscador Funcional */}
       <View style={styles.searchContainer}>
         <Text style={{ fontSize: 18, color: "#888" }}>🔍</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar conversaciones..."
           placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
         />
       </View>
 
       <Text style={styles.sectionTitle}>CONVERSACIONES RECIENTES</Text>
 
-      {/* Lista de Mensajes */}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {mensajes.map((msg) => (
-          <View
-            key={msg.id}
+      {/* Lista de Mensajes (FlatList para mejor rendimiento) */}
+      <FlatList
+        data={mensajesFiltrados}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              {searchQuery
+                ? "No se encontraron mensajes con la búsqueda."
+                : "No hay mensajes analizados. Los SMS entrantes aparecerán aquí."}
+            </Text>
+          </View>
+        }
+        renderItem={({ item: msg }) => (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              // Navegar al detalle del mensaje pasando los parámetros
+              // router.push({ pathname: "/detalleMensaje", params: { id: msg.id } });
+            }}
             style={[styles.card, styles[`card_${msg.riesgo}`]]}
           >
             {/* Contenido del Mensaje */}
@@ -91,9 +132,9 @@ export default function BandejaMensaje() {
                 </Text>
               </View>
             </View>
-          </View>
-        ))}
-      </ScrollView>
+          </TouchableOpacity>
+        )}
+      />
     </SafeAreaView>
   );
 }
@@ -119,7 +160,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconSpaced: {
-    marginRight: 12,
+    marginRight: 16,
   },
   searchContainer: {
     flexDirection: "row",
@@ -197,4 +238,15 @@ const styles = StyleSheet.create({
   text_seguro: { color: "#2e7d32" },
   text_fraude: { color: "#c62828" },
   text_sospechoso: { color: "#ef6c00" },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 50,
+    paddingHorizontal: 20,
+  },
+  emptyText: {
+    color: "#888",
+    fontSize: 14,
+    textAlign: "center",
+  },
 });
