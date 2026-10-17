@@ -25,7 +25,9 @@ export default function NotificacionesScreen() {
 
   // Estado inicial con lista vacía para datos reales
   // (Puedes probar agregando objetos de NotificacionAlerta en el arreglo)
-  const [notificaciones, setNotificaciones] = useState<NotificacionAlerta[]>([]);
+  const [notificaciones, setNotificaciones] = useState<NotificacionAlerta[]>(
+    [],
+  );
 
   // Filtrar solo las notificaciones pendientes de revisión/abrir
   const notificacionesPendientes = notificaciones.filter((item) => !item.leida);
@@ -33,7 +35,7 @@ export default function NotificacionesScreen() {
   const handleAbrirMensaje = (item: NotificacionAlerta) => {
     // Marcar como leída
     setNotificaciones((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, leida: true } : n))
+      prev.map((n) => (n.id === item.id ? { ...n, leida: true } : n)),
     );
 
     // Navegar a la vista del mensaje/chat correspondiente
@@ -47,18 +49,21 @@ export default function NotificacionesScreen() {
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
   };
 
+  const volver = () => {
+    router.push("/bandejaMensaje");
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Cabecera Accesible */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={volver}
           style={styles.backButton}
           activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Volver a la pantalla anterior"
         >
-          <Text style={styles.backButtonText}>← Volver</Text>
+          <Text style={styles.backIcon}>⬅️</Text>
+          <Text style={styles.backText}>Volver</Text>
         </TouchableOpacity>
 
         <Text style={styles.title}>Alertas</Text>
@@ -99,7 +104,8 @@ export default function NotificacionesScreen() {
             </View>
             <Text style={styles.emptyTitle}>Sin alertas pendientes</Text>
             <Text style={styles.emptySubtitle}>
-              Cuando recibas un mensaje sospechoso o con riesgo de fraude sin abrir, aparecerá en esta lista.
+              Cuando recibas un mensaje sospechoso o con riesgo de fraude sin
+              abrir, aparecerá en esta lista.
             </Text>
           </View>
         }
@@ -164,15 +170,18 @@ const styles = StyleSheet.create({
     marginVertical: 14,
   },
   backButton: {
-    paddingVertical: 8,
-    paddingRight: 12,
-    minHeight: 48,
-    justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 5,
   },
-  backButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
+  backIcon: {
+    fontSize: 20,
+    marginRight: 5,
+  },
+  backText: {
+    fontSize: 16,
     color: "#0d47a1",
+    fontWeight: "bold",
   },
   title: {
     fontSize: 22,

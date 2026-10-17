@@ -6,7 +6,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -26,7 +26,7 @@ export default function BandejaMensaje() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleNotificationsPress = () => {
-    router.push("/notificaciones");
+    router.push("/(tabs)/notificaciones");
   };
 
   const handleProfilePress = () => {

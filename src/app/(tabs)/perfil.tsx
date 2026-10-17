@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useState } from "react"; //para crear estados de las tarjetas acordion
 import {
   ScrollView,
   StyleSheet,
@@ -11,8 +12,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function PerfilScreen() {
   const router = useRouter();
 
+  //2. Creamos los "interruptores" para cada tarjeta
+  const [verPrivacidad, setVerPrivacidad] = useState(false);
+  const [verTerminos, setVerTerminos] = useState(false);
+
   const volver = () => {
     router.push("/bandejaMensaje");
+  };
+
+  const handleAssistantPress = () => {
+    // Redirige a la vista del chat con el asistente educativo IA
+    // router.push("/chatAsistente");
   };
 
   return (
@@ -29,7 +39,6 @@ export default function PerfilScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
         <View style={{ width: 70 }} />
-        {/* Espaciador invisible para centrar el título */}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -47,18 +56,43 @@ export default function PerfilScreen() {
 
         <Text style={styles.sectionTitle}>AJUSTES Y AYUDA</Text>
 
-        {/* Botones de configuración grandes y claros */}
-        <TouchableOpacity style={styles.optionCard} activeOpacity={0.7}>
-          <Text style={styles.optionIcon}>🛡️</Text>
-          <View style={styles.optionTextContainer}>
-            <Text style={styles.optionTitle}>Privacidad</Text>
-            <Text style={styles.optionSubtitle}>
-              Tus mensajes se analizan de forma segura.
-            </Text>
+        {/* --- TARJETA PRIVACIDAD DESPLEGABLE --- */}
+        <TouchableOpacity
+          style={styles.optionCardM}
+          activeOpacity={0.7}
+          onPress={() => setVerPrivacidad(!verPrivacidad)} //Cambia de true a false y viceversa
+        >
+          {/* Fila principal visible siempre */}
+          <View style={styles.optionHeader}>
+            <Text style={styles.optionIcon}>🛡️</Text>
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>Privacidad</Text>
+              <Text style={styles.optionSubtitle}>
+                Tus mensajes se analizan de forma segura.
+              </Text>
+            </View>
+            {/* Flecha indicadora que cambia según el estado */}
+            <Text style={{ fontSize: 16 }}>{verPrivacidad ? "🔼" : "🔽"}</Text>
           </View>
+
+          {/* Texto que aparece solo si verPrivacidad es true */}
+          {verPrivacidad && (
+            <View style={styles.expandedContent}>
+              <Text style={styles.expandedText}>
+                Toda la información que procesamos se queda en tu teléfono.
+                AntiFraude SMS nunca venderá tus datos ni leerá tus mensajes
+                personales, solo buscamos enlaces peligrosos (links) para
+                protegerte de posibles estafas.
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionCard} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.optionCard}
+          activeOpacity={0.7}
+          onPress={handleAssistantPress}
+        >
           <Text style={styles.optionIcon}>❓</Text>
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Centro de Ayuda</Text>
@@ -68,14 +102,33 @@ export default function PerfilScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionCard} activeOpacity={0.7}>
-          <Text style={styles.optionIcon}>📜</Text>
-          <View style={styles.optionTextContainer}>
-            <Text style={styles.optionTitle}>Términos y Condiciones</Text>
-            <Text style={styles.optionSubtitle}>
-              Reglas de uso de la aplicación.
-            </Text>
+        {/* --- TARJETA TÉRMINOS DESPLEGABLE --- */}
+        <TouchableOpacity
+          style={styles.optionCardM}
+          activeOpacity={0.7}
+          onPress={() => setVerTerminos(!verTerminos)}
+        >
+          <View style={styles.optionHeader}>
+            <Text style={styles.optionIcon}>📜</Text>
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>Términos y Condiciones</Text>
+              <Text style={styles.optionSubtitle}>
+                Reglas de uso de la aplicación.
+              </Text>
+            </View>
+            <Text style={{ fontSize: 16 }}>{verTerminos ? "🔼" : "🔽"}</Text>
           </View>
+
+          {verTerminos && (
+            <View style={styles.expandedContent}>
+              <Text style={styles.expandedText}>
+                Al usar esta aplicación, aceptas que nuestro sistema analizará
+                tus SMS entrantes como medida de prevención. Esta herramienta es
+                una ayuda de seguridad y no reemplaza el criterio y precaución
+                del usuario.
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
 
         {/* Botón de cierre de sesión destacado */}
@@ -100,7 +153,7 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F6F8", // Mismo fondo que la bandeja de mensajes
+    backgroundColor: "#F5F6F8",
     paddingHorizontal: 16,
   },
   header: {
@@ -216,5 +269,31 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: "#c62828",
+  },
+  optionCardM: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  optionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  expandedContent: {
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#EEEEEE",
+  },
+  expandedText: {
+    fontSize: 14,
+    color: "#555",
+    lineHeight: 22,
   },
 });

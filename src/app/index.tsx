@@ -124,9 +124,7 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* ========================================================= */}
           {/* MODAL 1: REGISTRO DE TELÉFONO */}
-          {/* ========================================================= */}
           <Modal
             animationType="fade"
             transparent={true}
@@ -156,7 +154,8 @@ export default function HomeScreen() {
                     onChangeText={manejarIngresoNumero} // Llama a la función limpiadora
                   />
                 </View>
-
+                {/*quizas vendria bien poner un texto aqui si es que falla el guardado indicando
+                que debe ser 8 digitos o que indique en rojo que deben ser 8 digitos y cuando este listo en verde */}
                 <View style={styles.botonesContainer}>
                   <TouchableOpacity
                     style={[styles.botonAlert, styles.botonCancelar]}
@@ -191,9 +190,7 @@ export default function HomeScreen() {
             </View>
           </Modal>
 
-          {/* ========================================================= */}
           {/* MODAL 2: SOLICITUD DE PERMISOS SMS*/}
-          {/* ========================================================= */}
           <Modal
             animationType="fade"
             transparent={true}
@@ -291,7 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0d47a1",
     padding: 15,
     borderRadius: 8,
-    width: "80%", // Hacemos que tenga un ancho fijo y uniforme
+    width: "80%",
     alignItems: "center",
     marginBottom: 5,
   },
@@ -302,7 +299,7 @@ const styles = StyleSheet.create({
   },
   textoInfo: {
     fontSize: 16,
-    color: "#a3a3a3", // Modificado por legibilidad con colores oscuros
+    color: "#a3a3a3",
     marginBottom: 10,
   },
   fondoOscuro: {
@@ -363,7 +360,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    overflow: "hidden", // Para que los bordes internos respeten la curva
+    overflow: "hidden",
   },
   prefijoCaja: {
     backgroundColor: "#f5f5f5",
