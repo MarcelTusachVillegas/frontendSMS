@@ -37,15 +37,18 @@ export default function BandejaMensaje() {
 
   const handleProfilePress = () => {
     // Ejemplo de navegación a la configuración del usuario:
-    // router.push("/configuracion");
-    Alert.alert("Configuración", "Redirigiendo a la configuración de usuario...");
+    router.push("/perfil");
+    /*Alert.alert(
+      "Configuración",
+      "Redirigiendo a la configuración de usuario...",
+    );*/
   };
 
   // Filtrado en tiempo real según la búsqueda
   const mensajesFiltrados = mensajes.filter(
     (msg) =>
       msg.remitente.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      msg.texto.toLowerCase().includes(searchQuery.toLowerCase())
+      msg.texto.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -67,10 +70,7 @@ export default function BandejaMensaje() {
             <Text style={{ fontSize: 22 }}>🔔</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={handleProfilePress}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={handleProfilePress} activeOpacity={0.7}>
             <Text style={{ fontSize: 24 }}>👤</Text>
           </TouchableOpacity>
         </View>
