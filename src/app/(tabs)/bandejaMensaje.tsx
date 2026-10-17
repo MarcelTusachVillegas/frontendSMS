@@ -1,17 +1,15 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   FlatList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Interfaz TypeScript para la estructura de SMS reales
 export interface MensajeSMS {
   id: string;
   remitente: string;
@@ -24,15 +22,11 @@ export interface MensajeSMS {
 export default function BandejaMensaje() {
   const router = useRouter();
 
-  // Estado que recibirá los SMS reales
   const [mensajes, setMensajes] = useState<MensajeSMS[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Manejo de botones de la cabecera
   const handleNotificationsPress = () => {
-    // Ejemplo de navegación o alerta temporal:
-    // router.push("/notificaciones");
-    Alert.alert("Notificaciones", "No tienes notificaciones pendientes.");
+    router.push("/notificaciones");
   };
 
   const handleProfilePress = () => {
@@ -44,7 +38,11 @@ export default function BandejaMensaje() {
     );*/
   };
 
-  // Filtrado en tiempo real según la búsqueda
+  const handleAssistantPress = () => {
+    // Redirige a la vista del chat con el asistente educativo IA
+    // router.push("/chatAsistente");
+  };
+
   const mensajesFiltrados = mensajes.filter(
     (msg) =>
       msg.remitente.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -66,11 +64,16 @@ export default function BandejaMensaje() {
             onPress={handleNotificationsPress}
             activeOpacity={0.7}
             style={styles.iconSpaced}
+            accessibilityLabel="Ver notificaciones"
           >
             <Text style={{ fontSize: 22 }}>🔔</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleProfilePress} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={handleProfilePress}
+            activeOpacity={0.7}
+            accessibilityLabel="Perfil y configuración"
+          >
             <Text style={{ fontSize: 24 }}>👤</Text>
           </TouchableOpacity>
         </View>
@@ -88,9 +91,29 @@ export default function BandejaMensaje() {
         />
       </View>
 
+      {/* Botón Accesible del Asistente Educativo de IA */}
+      <TouchableOpacity
+        style={styles.assistantButton}
+        onPress={handleAssistantPress}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Consultar con el Asistente Educativo IA"
+      >
+        <View style={styles.assistantIconContainer}>
+          <Text style={{ fontSize: 26 }}>🤖</Text>
+        </View>
+        <View style={styles.assistantTextContainer}>
+          <Text style={styles.assistantTitle}>Asistente Antifraude IA</Text>
+          <Text style={styles.assistantSubtitle}>
+            ¿Dudas con un mensaje? Haz tu consulta aquí
+          </Text>
+        </View>
+        <Text style={styles.assistantArrow}>➔</Text>
+      </TouchableOpacity>
+
       <Text style={styles.sectionTitle}>CONVERSACIONES RECIENTES</Text>
 
-      {/* Lista de Mensajes (FlatList para mejor rendimiento) */}
+      {/* Lista de Mensajes */}
       <FlatList
         data={mensajesFiltrados}
         keyExtractor={(item) => item.id}
@@ -108,12 +131,10 @@ export default function BandejaMensaje() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => {
-              // Navegar al detalle del mensaje pasando los parámetros
               // router.push({ pathname: "/detalleMensaje", params: { id: msg.id } });
             }}
             style={[styles.card, styles[`card_${msg.riesgo}`]]}
           >
-            {/* Contenido del Mensaje */}
             <View style={styles.messageContent}>
               <Text style={styles.remitente}>{msg.remitente}</Text>
               <Text style={styles.textoMensaje} numberOfLines={2}>
@@ -121,7 +142,6 @@ export default function BandejaMensaje() {
               </Text>
             </View>
 
-            {/* Tiempo y Estado */}
             <View style={styles.statusContainer}>
               <Text style={styles.tiempo}>{msg.tiempo}</Text>
               <View style={styles.badgeContainer}>
@@ -171,16 +191,61 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: "#ddd",
-    marginBottom: 20,
+    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
   },
+
+  /* Estilos Accesibles para el Asistente IA */
+  assistantButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0d47a1", // Azul oscuro de alto contraste
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 18,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  assistantIconContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 25,
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  assistantTextContainer: {
+    flex: 1,
+  },
+  assistantTitle: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "bold",
+  },
+  assistantSubtitle: {
+    color: "#E0E0E0",
+    fontSize: 13,
+    marginTop: 2,
+  },
+  assistantArrow: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+
   sectionTitle: {
-    fontSize: 12,
-    color: "#666",
+    fontSize: 13,
+    color: "#555",
     fontWeight: "bold",
     marginBottom: 10,
   },
@@ -241,12 +306,12 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 50,
+    marginTop: 40,
     paddingHorizontal: 20,
   },
   emptyText: {
     color: "#888",
-    fontSize: 14,
+    fontSize: 15,
     textAlign: "center",
   },
 });
