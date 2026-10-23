@@ -26,7 +26,7 @@ export default function BandejaMensaje() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleNotificationsPress = () => {
-    router.push("/(tabs)/notificaciones");
+    router.push("/notificaciones");
   };
 
   const handleProfilePress = () => {
