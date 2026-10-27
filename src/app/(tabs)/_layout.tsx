@@ -1,21 +1,22 @@
 import { Tabs } from "expo-router";
-
-export default function TabLayout() {
+import { Text } from "react-native";
+export default function TabsLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        // Si deseas ocultar la barra en TODAS las pestañas:
-        tabBarStyle: { display: "none" },
-      }}
-    >
+    <Tabs screenOptions={{ headerShown: false }}>
+      {/* Pestañas visibles en el menú inferior */}
+      <Tabs.Screen name="bandejaMensaje" options={{ title: "Inicio" }} />
+      <Tabs.Screen name="centroEducativo" options={{ title: "Educación" }} />
+      <Tabs.Screen name="notificaciones" options={{ title: "Alertas" }} />
+      <Tabs.Screen name="perfil" options={{ title: "Perfil" }} />
+      <Tabs.Screen name="prueba" options={{ title: "Prueba" }} />
       <Tabs.Screen
-        name="bandejaMensaje"
+        name="detallemensaje"
         options={{
-          // O si deseas ocultarla SOLO en esta pestaña:
-          tabBarStyle: { display: "none" },
+          title: "Detalle",
+          tabBarIcon: () => <Text style={{ fontSize: 22 }}>👾</Text>,
         }}
       />
+      {/* Pantallas internas accesibles por código, pero ocultas de la barra inferior */}
     </Tabs>
   );
 }
