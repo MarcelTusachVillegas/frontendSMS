@@ -26,16 +26,22 @@ export default function BandejaMensaje() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleNotificationsPress = () => {
-    router.push("/(tabs)/notificaciones");
+    router.push("/notificaciones");
   };
 
   const handleProfilePress = () => {
     // Ejemplo de navegación a la configuración del usuario:
     router.push("/perfil");
-    /*Alert.alert(
-      "Configuración",
-      "Redirigiendo a la configuración de usuario...",
-    );*/
+  };
+
+  const centroEducativo = () => {
+    // Ejemplo de navegación a la configuración del usuario:
+    router.push("/centroEducativo");
+  };
+
+  const prueba = () => {
+    // Ejemplo de navegación a la configuración del usuario:
+    router.push("/prueba");
   };
 
   const handleAssistantPress = () => {
@@ -60,6 +66,24 @@ export default function BandejaMensaje() {
           SMS
         </Text>
         <View style={styles.headerIcons}>
+          <TouchableOpacity
+            onPress={prueba}
+            activeOpacity={0.7}
+            style={styles.iconSpaced}
+            accessibilityLabel="Pruebas"
+          >
+            <Text style={{ fontSize: 22 }}>👾</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={centroEducativo}
+            activeOpacity={0.7}
+            style={styles.iconSpaced}
+            accessibilityLabel="Centro Educativo"
+          >
+            <Text style={{ fontSize: 22 }}>🎓</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={handleNotificationsPress}
             activeOpacity={0.7}
