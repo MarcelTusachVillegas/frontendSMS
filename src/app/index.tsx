@@ -1,14 +1,18 @@
 import { AnimatedIcon } from "@/components/animated-icon";
+import { CodigoOtpInput } from "@/components/codigo-otp-input";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { WebBadge } from "@/components/web-badge";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { useAuth } from "@/context/auth-context";
+import { solicitarOtp, verificarOtp } from "@/lib/api";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,38 +24,92 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { telefono: telefonoAutenticado, iniciarSesion } = useAuth();
 
-  // 1. Estados para los Modales y Datos
+  // Estados para los Modales y Datos
   const [modalVisible, setModalVisible] = useState(false);
-  const [permisoModalVisible, setPermisoModalVisible] = useState(false); // <--- Nuevo Modal para Permisos
+  const [permisoModalVisible, setPermisoModalVisible] = useState(false);
   const [telefonoIngresado, setTelefonoIngresado] = useState("");
-  const [telefonoGuardado, setTelefonoGuardado] = useState("");
 
-  // Función que se ejecuta al darle a "Guardar" luego ocupar telefonoGuardado para DB
+  // Estados del flujo OTP con Backend
+  const [paso, setPaso] = useState<"telefono" | "codigo">("telefono");
+  const [cargando, setCargando] = useState(false);
+  const [errorOtp, setErrorOtp] = useState<string | null>(null);
+  const [codigoOtp, setCodigoOtp] = useState("");
+  const [codigoSimulado, setCodigoSimulado] = useState<string | null>(null);
+  const [telefonoPendiente, setTelefonoPendiente] = useState("");
+
   // 1. Limpia el texto en vivo (solo deja números)
   const manejarIngresoNumero = (texto: string) => {
     const soloNumeros = texto.replace(/[^0-9]/g, "");
     setTelefonoIngresado(soloNumeros);
   };
 
-  // 2. Une las piezas al presionar Guardar
-  const guardarNumero = () => {
-    // Validamos que haya ingresado los 8 números antes de guardar
-    if (telefonoIngresado.length === 8) {
-      const numeroCompleto = "+569" + telefonoIngresado;
-      setTelefonoGuardado(numeroCompleto);
+  // Abrir Modal de Teléfono resetando estados
+  const abrirModalTelefono = () => {
+    setPaso("telefono");
+    setErrorOtp(null);
+    setCodigoOtp("");
+    setCodigoSimulado(null);
+    setModalVisible(true);
+  };
+
+  // Volver del paso código al paso teléfono
+  const volverAlTelefono = () => {
+    setPaso("telefono");
+    setErrorOtp(null);
+    setCodigoOtp("");
+    setCodigoSimulado(null);
+  };
+
+  // Paso 1: Guardar -> Solicitar OTP al backend
+  const guardarNumero = async () => {
+    if (telefonoIngresado.length !== 8 || cargando) return;
+
+    const numeroCompleto = "+569" + telefonoIngresado;
+    setCargando(true);
+    setErrorOtp(null);
+    try {
+      const respuesta = await solicitarOtp(numeroCompleto);
+      setTelefonoPendiente(numeroCompleto);
+      setCodigoSimulado(respuesta.codigo);
+      setCodigoOtp("");
+      setPaso("codigo");
+    } catch (error) {
+      setErrorOtp(
+        error instanceof Error ? error.message : "No se pudo enviar el código",
+      );
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // Paso 2: Verificar -> Validar OTP con el backend
+  const confirmarCodigo = async () => {
+    if (codigoOtp.length !== 6 || cargando) return;
+
+    setCargando(true);
+    setErrorOtp(null);
+    try {
+      const { token, usuario } = await verificarOtp(telefonoPendiente, codigoOtp);
+      iniciarSesion({ telefono: usuario.telefono, token, usuario });
       setModalVisible(false);
-      console.log("Número guardado en el sistema:", numeroCompleto);
-    } else {
-      // Opcional: Avisar si le faltan números
-      console.log("Faltan números por ingresar");
+      setPaso("telefono");
+      setCodigoOtp("");
+      setCodigoSimulado(null);
+      setTelefonoIngresado("");
+    } catch (error) {
+      setErrorOtp(
+        error instanceof Error ? error.message : "Código inválido o expirado",
+      );
+    } finally {
+      setCargando(false);
     }
   };
 
   // Función de Éxito - Ir a la bandeja
   const aceptarPermiso = () => {
     setPermisoModalVisible(false);
-    // Alert.alert("Concedido", "El radar antifraude está activado."); // Opcional, por si quieres feedback
     router.replace("/(tabs)/bandejaMensaje");
   };
 
@@ -79,45 +137,41 @@ export default function HomeScreen() {
           </ThemedView>
 
           <ThemedText style={styles.description}>
-            Analizamos tus mensajes para detectar fraudes (smishing).
-            Necesitamos tu numero de telefono y permiso para leer SMS y así
-            avisarte de riesgos. Es seguro y privado.
+            Analizamos tus mensajes para detectar fraudes (smishing). Necesitamos tu
+            numero de telefono y permiso para leer SMS y así avisarte de riesgos. Es
+            seguro y privado.
           </ThemedText>
 
           {/* BOTÓN 1: Ingresar Número */}
-          <TouchableOpacity
-            style={styles.botonAbrir}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.textoBoton}>Ingresar mi número</Text>
+          <TouchableOpacity style={styles.botonAbrir} onPress={abrirModalTelefono}>
+            <Text style={styles.textoBoton}>
+              {telefonoAutenticado ? "Cambiar número" : "Ingresar mi número"}
+            </Text>
           </TouchableOpacity>
 
-          {/*esto es momentaneo, comprobador de numero a evaluar dependiendo de como se llame en backend y DB */}
+          {/* Comprobador de número autenticado */}
           <Text style={styles.textoInfo}>
             Número actual:{" "}
-            {telefonoGuardado ? telefonoGuardado : "No registrado"}
+            {telefonoAutenticado ? telefonoAutenticado : "No registrado"}
           </Text>
 
-          {/* BOTÓN 2: Conceder Permiso (Bloqueado hasta tener número) */}
+          {/* BOTÓN 2: Conceder Permiso (Bloqueado hasta tener número autenticado con OTP) */}
           <TouchableOpacity
             style={[
               styles.botonAbrir,
-              // Si no hay teléfono guardado, el fondo se pone gris y se vuelve menos visible. Si hay, se pone azul y full visible.
-              // se puede modificar el nivel de opacidad para variar, libre a modificacion dependiendo del testeo de usuarios
               {
                 backgroundColor:
-                  telefonoGuardado === "" ? "#cccccc" : "#1e88e5",
-                opacity: telefonoGuardado === "" ? 0.7 : 1,
+                  telefonoAutenticado === null ? "#cccccc" : "#1e88e5",
+                opacity: telefonoAutenticado === null ? 0.7 : 1,
               },
             ]}
             onPress={() => setPermisoModalVisible(true)}
-            disabled={telefonoGuardado === ""} //bloquea boton si no se ha introducido un numero
+            disabled={telefonoAutenticado === null}
           >
             <Text
               style={[
                 styles.textoBoton,
-                // Cambiamos el color de la letra para que combine con el gris
-                { color: telefonoGuardado === "" ? "#666666" : "#fff" },
+                { color: telefonoAutenticado === null ? "#666666" : "#fff" },
               ]}
             >
               CONCEDER PERMISO DE SMS
@@ -128,7 +182,7 @@ export default function HomeScreen() {
           <Modal
             animationType="fade"
             transparent={true}
-            visible={modalVisible}
+            visible={modalVisible && paso === "telefono"}
             onRequestClose={() => setModalVisible(false)}
           >
             <View style={styles.fondoOscuro}>
@@ -139,23 +193,24 @@ export default function HomeScreen() {
                 </Text>
 
                 <View style={styles.inputContainer}>
-                  {/* Prefijo visual fijo */}
                   <View style={styles.prefijoCaja}>
                     <Text style={styles.prefijoTexto}>+56 9</Text>
                   </View>
 
-                  {/* Campo numérico restringido a 8 dígitos */}
                   <TextInput
                     style={styles.inputRestringido}
                     placeholder="1234 5678"
-                    keyboardType="numeric" // Teclado estrictamente numérico
-                    maxLength={8} // No permite escribir más de 8 números
+                    keyboardType="numeric"
+                    maxLength={8}
                     value={telefonoIngresado}
-                    onChangeText={manejarIngresoNumero} // Llama a la función limpiadora
+                    onChangeText={manejarIngresoNumero}
                   />
                 </View>
-                {/*quizas vendria bien poner un texto aqui si es que falla el guardado indicando
-                que debe ser 8 digitos o que indique en rojo que deben ser 8 digitos y cuando este listo en verde */}
+
+                {errorOtp && paso === "telefono" && (
+                  <Text style={styles.textoError}>{errorOtp}</Text>
+                )}
+
                 <View style={styles.botonesContainer}>
                   <TouchableOpacity
                     style={[styles.botonAlert, styles.botonCancelar]}
@@ -164,13 +219,16 @@ export default function HomeScreen() {
                     <Text style={styles.textoCancelar}>Cancelar</Text>
                   </TouchableOpacity>
 
-                  {/*ir probando acciones para dar a entender que tiene que poner 8 digitos */}
                   <TouchableOpacity
                     style={[
                       styles.botonAlert,
                       styles.botonGuardar,
-                      { opacity: telefonoIngresado.length < 8 ? 0.7 : 1 },
+                      {
+                        opacity:
+                          telefonoIngresado.length < 8 || cargando ? 0.7 : 1,
+                      },
                     ]}
+                    disabled={telefonoIngresado.length < 8 || cargando}
                     onPress={guardarNumero}
                   >
                     <Text
@@ -178,11 +236,13 @@ export default function HomeScreen() {
                         styles.textoGuardar,
                         {
                           color:
-                            telefonoIngresado.length < 8 ? "#666666" : "#fff",
+                            telefonoIngresado.length < 8 || cargando
+                              ? "#666666"
+                              : "#fff",
                         },
                       ]}
                     >
-                      Guardar
+                      {cargando ? "Enviando..." : "Guardar"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -190,7 +250,79 @@ export default function HomeScreen() {
             </View>
           </Modal>
 
-          {/* MODAL 2: SOLICITUD DE PERMISOS SMS*/}
+          {/* MODAL 2: VERIFICAR CÓDIGO OTP */}
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible && paso === "codigo"}
+            onRequestClose={volverAlTelefono}
+          >
+            <View style={styles.fondoOscuro}>
+              <View style={styles.cajaAlert}>
+                <Text style={styles.tituloAlert}>Verificar código</Text>
+                <Text style={styles.subtituloAlert}>
+                  Enviamos un código de 6 dígitos a {telefonoPendiente}
+                </Text>
+
+                {codigoSimulado && (
+                  <View style={styles.cajaSimulada}>
+                    <Text style={styles.etiquetaSimulada}>
+                      CÓDIGO DE PRUEBA (SIMULADO):
+                    </Text>
+                    <Text style={styles.codigoSimulado}>{codigoSimulado}</Text>
+                    <Pressable onPress={() => setCodigoOtp(codigoSimulado)}>
+                      <Text style={styles.usarCodigo}>Usar este código</Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                <CodigoOtpInput
+                  valor={codigoOtp}
+                  onCambio={setCodigoOtp}
+                  deshabilitado={cargando}
+                />
+
+                {errorOtp && paso === "codigo" && (
+                  <Text style={styles.textoError}>{errorOtp}</Text>
+                )}
+
+                <View style={styles.botonesContainer}>
+                  <TouchableOpacity
+                    style={[styles.botonAlert, styles.botonCancelar]}
+                    onPress={volverAlTelefono}
+                  >
+                    <Text style={styles.textoCancelar}>Atrás</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.botonAlert,
+                      styles.botonGuardar,
+                      { opacity: codigoOtp.length < 6 || cargando ? 0.7 : 1 },
+                    ]}
+                    disabled={codigoOtp.length < 6 || cargando}
+                    onPress={confirmarCodigo}
+                  >
+                    <Text
+                      style={[
+                        styles.textoGuardar,
+                        {
+                          color:
+                            codigoOtp.length < 6 || cargando
+                              ? "#666666"
+                              : "#fff",
+                        },
+                      ]}
+                    >
+                      {cargando ? "Verificando..." : "Verificar"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          {/* MODAL 3: SOLICITUD DE PERMISOS SMS */}
           <Modal
             animationType="fade"
             transparent={true}
@@ -211,15 +343,13 @@ export default function HomeScreen() {
                     { textAlign: "center", fontSize: 15 },
                   ]}
                 >
-                  Para protegerte de las estafas, necesitamos revisar tus
-                  mensajes entrantes. Solo analizaremos los enlaces peligrosos
-                  para cuidarte.
+                  Para protegerte de las estafas, necesitamos revisar tus mensajes
+                  entrantes. Solo analizaremos los enlaces peligrosos para cuidarte.
                   {"\n\n"}
                   ¿Autorizas el análisis de tus mensajes?
                 </Text>
 
                 <View style={styles.botonesContainer}>
-                  {/* Botón Cancelar */}
                   <TouchableOpacity
                     style={[styles.botonAlert, styles.botonCancelar]}
                     onPress={rechazarPermiso}
@@ -227,7 +357,6 @@ export default function HomeScreen() {
                     <Text style={styles.textoCancelar}>Cancelar</Text>
                   </TouchableOpacity>
 
-                  {/* Botón Aceptar */}
                   <TouchableOpacity
                     style={[
                       styles.botonAlert,
@@ -330,7 +459,7 @@ const styles = StyleSheet.create({
   botonesContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 5,
+    marginTop: 15,
   },
   botonAlert: {
     flex: 1,
@@ -356,7 +485,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
@@ -380,5 +509,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     fontSize: 16,
     color: "#333",
+  },
+  // Estilos agregados para la simulación OTP y errores
+  cajaSimulada: {
+    backgroundColor: "#FFF8E1",
+    borderWidth: 1,
+    borderColor: "#FFD54F",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+    alignItems: "center",
+    width: "100%",
+  },
+  etiquetaSimulada: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#8d6e00",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  codigoSimulado: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    letterSpacing: 6,
+    marginBottom: 6,
+  },
+  usarCodigo: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#0d47a1",
+    textDecorationLine: "underline",
+  },
+  textoError: {
+    color: "#d32f2f",
+    fontSize: 13,
+    marginTop: 5,
+    textAlign: "center",
   },
 });

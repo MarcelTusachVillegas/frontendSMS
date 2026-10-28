@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react"; //para crear estados de las tarjetas acordion
+import { useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -9,10 +9,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAuth } from "@/context/auth-context";
+
 export default function PerfilScreen() {
   const router = useRouter();
+  const { telefono, cerrarSesion } = useAuth();
 
-  //2. Creamos los "interruptores" para cada tarjeta
+  // Creamos los "interruptores" para cada tarjeta acordeón
   const [verPrivacidad, setVerPrivacidad] = useState(false);
   const [verTerminos, setVerTerminos] = useState(false);
 
@@ -23,6 +26,11 @@ export default function PerfilScreen() {
   const handleAssistantPress = () => {
     // Redirige a la vista del chat con el asistente educativo IA
     // router.push("/chatAsistente");
+  };
+
+  const handleCerrarSesion = () => {
+    cerrarSesion();
+    router.replace("/");
   };
 
   return (
@@ -48,7 +56,7 @@ export default function PerfilScreen() {
             <Text style={{ fontSize: 40 }}>👤</Text>
           </View>
           <Text style={styles.userName}>Usuario Protegido</Text>
-          <Text style={styles.userPhone}>+56 9 1234 5678</Text>
+          <Text style={styles.userPhone}>{telefono ?? "Sin número"}</Text>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>✅ Cuenta Activa</Text>
           </View>
@@ -60,7 +68,7 @@ export default function PerfilScreen() {
         <TouchableOpacity
           style={styles.optionCardM}
           activeOpacity={0.7}
-          onPress={() => setVerPrivacidad(!verPrivacidad)} //Cambia de true a false y viceversa
+          onPress={() => setVerPrivacidad(!verPrivacidad)}
         >
           {/* Fila principal visible siempre */}
           <View style={styles.optionHeader}>
@@ -71,7 +79,6 @@ export default function PerfilScreen() {
                 Tus mensajes se analizan de forma segura.
               </Text>
             </View>
-            {/* Flecha indicadora que cambia según el estado */}
             <Text style={{ fontSize: 16 }}>{verPrivacidad ? "🔼" : "🔽"}</Text>
           </View>
 
@@ -135,8 +142,7 @@ export default function PerfilScreen() {
         <TouchableOpacity
           style={[styles.optionCard, styles.logoutCard]}
           activeOpacity={0.7}
-          // salir de aplicacion
-          onPress={() => router.replace("/")}
+          onPress={handleCerrarSesion}
         >
           <Text style={styles.optionIcon}>🚪</Text>
           <View style={styles.optionTextContainer}>

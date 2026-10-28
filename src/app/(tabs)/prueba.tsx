@@ -37,7 +37,7 @@ export default function PantallaPrueba() {
   // Función 1: Enviar un SMS de prueba (POST) recordar poner guardar true o false
   const probarConexionPOST = async () => {
     try {
-      const respuesta = await fetch("http://192.168.0.5:3000/api/reportes", {
+      const respuesta = await fetch("http://192.168.100.105:3000/api/reportes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -62,7 +62,7 @@ export default function PantallaPrueba() {
   // Función 2: Obtener el historial completo y filtrar los de hoy en el frontend
   const probarConexionGET = async () => {
     try {
-      const respuesta = await fetch("http://192.168.0.5:3000/api/reportes", {
+      const respuesta = await fetch("http://192.168.100.105:3000/api/reportes", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

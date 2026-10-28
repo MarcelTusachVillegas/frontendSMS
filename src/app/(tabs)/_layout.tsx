@@ -1,6 +1,16 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Text } from "react-native";
+
+import { useAuth } from "@/context/auth-context";
+
 export default function TabsLayout() {
+  const { autenticado } = useAuth();
+
+  // Guard de navegación: redirige al inicio si no se ha completado la verificación OTP
+  if (!autenticado) {
+    return <Redirect href="/" />;
+  }
+
   return (
     <Tabs screenOptions={{ headerShown: false }}>
       {/* Pestañas visibles en el menú inferior */}
