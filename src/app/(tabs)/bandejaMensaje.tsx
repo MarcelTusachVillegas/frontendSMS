@@ -65,42 +65,6 @@ export default function BandejaMensaje() {
           </Text>{" "}
           SMS
         </Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity
-            onPress={prueba}
-            activeOpacity={0.7}
-            style={styles.iconSpaced}
-            accessibilityLabel="Pruebas"
-          >
-            <Text style={{ fontSize: 22 }}>👾</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={centroEducativo}
-            activeOpacity={0.7}
-            style={styles.iconSpaced}
-            accessibilityLabel="Centro Educativo"
-          >
-            <Text style={{ fontSize: 22 }}>🎓</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleNotificationsPress}
-            activeOpacity={0.7}
-            style={styles.iconSpaced}
-            accessibilityLabel="Ver notificaciones"
-          >
-            <Text style={{ fontSize: 22 }}>🔔</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleProfilePress}
-            activeOpacity={0.7}
-            accessibilityLabel="Perfil y configuración"
-          >
-            <Text style={{ fontSize: 24 }}>👤</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
       {/* Buscador Funcional */}
@@ -198,10 +162,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     color: "#333",
-  },
-  headerIcons: {
-    flexDirection: "row",
-    alignItems: "center",
   },
   iconSpaced: {
     marginRight: 16,

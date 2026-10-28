@@ -14,11 +14,41 @@ export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }}>
       {/* Pestañas visibles en el menú inferior */}
-      <Tabs.Screen name="bandejaMensaje" options={{ title: "Inicio" }} />
-      <Tabs.Screen name="centroEducativo" options={{ title: "Educación" }} />
-      <Tabs.Screen name="notificaciones" options={{ title: "Alertas" }} />
-      <Tabs.Screen name="perfil" options={{ title: "Perfil" }} />
-      <Tabs.Screen name="prueba" options={{ title: "Prueba" }} />
+      <Tabs.Screen
+        name="bandejaMensaje"
+        options={{
+          title: "Inicio",
+          tabBarIcon: () => <Text style={{ fontSize: 22 }}>🏠</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="centroEducativo"
+        options={{
+          title: "Educación",
+          tabBarIcon: () => <Text style={{ fontSize: 22 }}>🎓</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="notificaciones"
+        options={{
+          title: "Alertas",
+          tabBarIcon: () => <Text style={{ fontSize: 22 }}>🔔</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: "Perfil",
+          tabBarIcon: () => <Text style={{ fontSize: 22 }}>👤</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="prueba"
+        options={{
+          title: "Prueba",
+          tabBarIcon: () => <Text style={{ fontSize: 22 }}>👾</Text>,
+        }}
+      />
       <Tabs.Screen
         name="detallemensaje"
         options={{
