@@ -3,6 +3,7 @@ import {
   obtenerReportes,
   Reporte,
 } from "@/lib/api";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
@@ -14,6 +15,7 @@ import {
 } from "react-native";
 
 export default function PantallaPrueba() {
+  const router = useRouter();
   const [reportesGuardados, setReportesGuardados] = useState<Reporte[]>([]);
 
   // Función 1: Enviar un SMS de prueba (POST)
@@ -21,10 +23,10 @@ export default function PantallaPrueba() {
     try {
       await crearReportePrueba({
         mensaje:
-          "La entrega de su paquete ha sido suspendida debido a que falta un numero de calle en el paquete por favor actualice  https://qrco.de/beJCSX",
-        numero_remitente: "Chilexpress",
+          "Hola. CLP$500 fueron abonados a tu cuenta. Registrate, gira la ruleta de bienvenida y con tu primer deposito desbloquea mas premios. https://bit.ly/4bPEqZH",
+        numero_remitente: "desconocido",
         origen: "simulado",
-        score_riesgo: 85,
+        score_riesgo: 82,
         guardar: true,
       });
 
@@ -161,6 +163,26 @@ export default function PantallaPrueba() {
                   ? new Date(reporte.fecha_reporte).toLocaleDateString("es-CL")
                   : "Sin fecha"}
               </Text>
+
+              <View style={styles.botonDetalleContainer}>
+                <Button
+                  title="Ver Detalle de este Mensaje"
+                  color="#5856D6"
+                  onPress={() => {
+                    if (reporte._id) {
+                      router.push({
+                        pathname: "/detallemensaje",
+                        params: { id: reporte._id },
+                      });
+                    } else {
+                      Alert.alert(
+                        "Sin ID",
+                        "Este reporte no tiene un ID de MongoDB asociado."
+                      );
+                    }
+                  }}
+                />
+              </View>
             </View>
           ))}
       </ScrollView>
@@ -221,5 +243,8 @@ const styles = StyleSheet.create({
   negrita: {
     fontWeight: "bold",
     color: "#000",
+  },
+  botonDetalleContainer: {
+    marginTop: 12,
   },
 });
