@@ -75,3 +75,69 @@ export function verificarOtp(telefono: string, codigo: string) {
     codigo,
   });
 }
+
+// --- TIPOS PARA REPORTES Y ANÁLISIS ---
+
+export type NivelRiesgo = "bajo" | "medio" | "alto" | null;
+
+export type Analisis = {
+  virustotal_maliciosos: number | null;
+  dominio_dias_antiguedad: number | null;
+  coincide_patron_dataset: boolean;
+};
+
+export type Reporte = {
+  _id?: string;
+  mensaje: string;
+  remitente_tecnico?: string;
+  numero_remitente?: string;
+  telefono_destino?: string | null;
+  empresa_mencionada: string;
+  url: string;
+  categoria: string;
+  estado: string;
+  score_riesgo: number | null;
+  nivel_riesgo?: NivelRiesgo;
+  analisis: Analisis;
+  fecha_reporte: string;
+  reportado_por?: string;
+};
+
+// --- HELPER GET REUTILIZABLE ---
+
+async function get<T>(path: string): Promise<T> {
+  const respuesta = await fetch(`${API_BASE_URL}/api${path}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const text = await respuesta.text();
+
+  if (!respuesta.ok) {
+    throw new ApiError(
+      `Error HTTP ${respuesta.status}: ${text.substring(0, 100)}`,
+      respuesta.status
+    );
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiError("Respuesta no es un JSON válido", respuesta.status);
+  }
+}
+
+// --- FUNCIONES API PARA REPORTES ---
+
+export function obtenerReportes(telefonoDestino?: string | null) {
+  const query = telefonoDestino ? `?telefono_destino=${encodeURIComponent(telefonoDestino)}` : "";
+  return get<Reporte[]>(`/reportes${query}`);
+}
+
+export function obtenerReportePorId(id: string) {
+  return get<Reporte>(`/reportes/${id}`);
+}
+
+export function crearReportePrueba(body: unknown) {
+  return post<{ mensaje: string; reporte: Reporte }>("/reportes", body);
+}

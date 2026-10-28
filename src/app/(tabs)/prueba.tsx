@@ -1,3 +1,8 @@
+import {
+  crearReportePrueba,
+  obtenerReportes,
+  Reporte,
+} from "@/lib/api";
 import { useState } from "react";
 import {
   Alert,
@@ -8,48 +13,21 @@ import {
   View,
 } from "react-native";
 
-// 1. Definimos la interfaz TypeScript con la estructura exacta de tu base de datos
-// 1. AQUÍ VAN TUS INTERFACES (Fuera de la función)
-interface Analisis {
-  virustotal_maliciosos: number | null;
-  dominio_dias_antiguedad: number | null;
-  coincide_patron_dataset: boolean;
-}
-
-interface Reporte {
-  _id?: string;
-  mensaje: string;
-  remitente_tecnico: string;
-  empresa_mencionada: string;
-  url: string;
-  categoria: string;
-  estado: string;
-  score_riesgo: number | null;
-  analisis: Analisis;
-  fecha_reporte: string;
-  reportado_por: string;
-}
-
 export default function PantallaPrueba() {
-  // Estado para guardar los reportes que traigamos con el GET
   const [reportesGuardados, setReportesGuardados] = useState<Reporte[]>([]);
 
-  // Función 1: Enviar un SMS de prueba (POST) recordar poner guardar true o false
+  // Función 1: Enviar un SMS de prueba (POST)
   const probarConexionPOST = async () => {
     try {
-      const respuesta = await fetch("http://192.168.100.105:3000/api/reportes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mensaje:
-            "La entrega de su paquete ha sido suspendida debido a que falta un numero de calle en el paquete por favor actualice  https://qrco.de/beJCSX",
-          guardar: true,
-        }),
+      await crearReportePrueba({
+        mensaje:
+          "La entrega de su paquete ha sido suspendida debido a que falta un numero de calle en el paquete por favor actualice  https://qrco.de/beJCSX",
+        numero_remitente: "Chilexpress",
+        origen: "simulado",
+        score_riesgo: 85,
+        guardar: true,
       });
 
-      const datos = await respuesta.json();
       Alert.alert(
         "¡POST Exitoso!",
         "Mensaje enviado y guardado en el backend.",
@@ -59,47 +37,31 @@ export default function PantallaPrueba() {
     }
   };
 
-  // Función 2: Obtener el historial completo y filtrar los de hoy en el frontend
+  // Función 2: Obtener el historial completo
   const probarConexionGET = async () => {
     try {
-      const respuesta = await fetch("http://192.168.100.105:3000/api/reportes", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const todosLosDatos = await obtenerReportes();
 
-      // 1. Recibimos TODOS los datos que manda el backend
-      const todosLosDatos: Reporte[] = await respuesta.json();
-
-      // 2. Calculamos el inicio del día de hoy a las 00:00 en el celular
       const inicioDeHoy = new Date();
       inicioDeHoy.setHours(0, 0, 0, 0);
 
-      // 3. El FRONTEND filtra la lista
       const datosDeHoy = todosLosDatos.filter((reporte) => {
-        // Convertimos el texto de la fecha del reporte a un objeto Date real
         const fechaDelReporte = new Date(reporte.fecha_reporte);
-
-        // Solo conservamos los que sean mayores o iguales a hoy a las 00:00
         return fechaDelReporte >= inicioDeHoy;
       });
 
-      // 4. Guardamos SOLO los de hoy en la memoria de la pantalla para que se dibujen datosDeHoy
-      // para ver todos los reportes seria todosLosDatos
-      setReportesGuardados(datosDeHoy);
+      // Muestra los de hoy o todos si no hay registros de hoy para pruebas
+      const aMostrar = datosDeHoy.length > 0 ? datosDeHoy : todosLosDatos;
+      setReportesGuardados(aMostrar);
 
-      // Alerta para confirmar cuántos llegaron vs cuántos mostramos
       Alert.alert(
         "¡Filtrado Exitoso!",
-        `El backend mandó ${todosLosDatos.length} reportes, pero filtramos y mostramos los ${datosDeHoy.length} de hoy.`,
+        `El backend mandó ${todosLosDatos.length} reportes, mostrando ${aMostrar.length} resultados.`,
       );
     } catch (error: any) {
       Alert.alert("Error de red", error.message);
     }
   };
-
-  // quizas pueda agregar otro condicional para que los que lleguen sean reportes del dia y del numero celu como id
 
   return (
     <View style={styles.container}>
@@ -121,11 +83,10 @@ export default function PantallaPrueba() {
         />
       </View>
 
-      {/* Si hay reportes cargados, mostramos una lista ordenada */}
       <ScrollView style={styles.lista}>
         {Array.isArray(reportesGuardados) &&
           reportesGuardados.map((reporte, index) => (
-            <View key={index} style={styles.tarjeta}>
+            <View key={reporte._id || index} style={styles.tarjeta}>
               <Text style={styles.tarjetaTitulo}>Reporte #{index + 1}</Text>
 
               <Text style={styles.textoGeneral}>
@@ -135,12 +96,14 @@ export default function PantallaPrueba() {
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Remitente: </Text>
-                {reporte?.remitente_tecnico}
+                {reporte?.numero_remitente ||
+                  reporte?.remitente_tecnico ||
+                  "desconocido"}
               </Text>
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Empresa: </Text>
-                {reporte?.empresa_mencionada}
+                {reporte?.empresa_mencionada || "No identificada"}
               </Text>
 
               <Text style={styles.textoGeneral}>
@@ -150,12 +113,12 @@ export default function PantallaPrueba() {
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Categoría: </Text>
-                {reporte?.categoria}
+                {reporte?.categoria || "sin_clasificar"}
               </Text>
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Estado: </Text>
-                {reporte?.estado}
+                {reporte?.estado || "pendiente"}
               </Text>
 
               <Text style={styles.textoGeneral}>
@@ -166,7 +129,6 @@ export default function PantallaPrueba() {
                   : "Calculando..."}
               </Text>
 
-              {/* Sección del sub-objeto Análisis */}
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>VirusTotal (Maliciosos): </Text>
                 {reporte?.analisis?.virustotal_maliciosos !== null &&
@@ -180,7 +142,7 @@ export default function PantallaPrueba() {
                 {reporte?.analisis?.dominio_dias_antiguedad !== null &&
                 reporte?.analisis?.dominio_dias_antiguedad !== undefined
                   ? `${reporte?.analisis?.dominio_dias_antiguedad} días`
-                  : "Link Caido"}
+                  : "Link Caído"}
               </Text>
 
               <Text style={styles.textoGeneral}>
@@ -190,7 +152,7 @@ export default function PantallaPrueba() {
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Reportado por: </Text>
-                {reporte?.reportado_por}
+                {reporte?.reportado_por || "Sistema/Prueba"}
               </Text>
 
               <Text style={styles.textoGeneral}>
@@ -229,13 +191,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 8,
   },
-  item: {
-    fontSize: 14,
-    marginBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5EA",
-    paddingBottom: 5,
-  },
   tarjeta: {
     backgroundColor: "#ffffff",
     padding: 15,
@@ -245,9 +200,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3, // Sombra para Android
+    elevation: 3,
     borderLeftWidth: 5,
-    borderLeftColor: "#007AFF", // Una franja azul al costado para darle estilo
+    borderLeftColor: "#007AFF",
   },
   tarjetaTitulo: {
     fontSize: 16,
