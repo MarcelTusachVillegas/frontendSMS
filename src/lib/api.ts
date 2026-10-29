@@ -30,10 +30,17 @@ export class ApiError extends Error {
   }
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(
+  path: string,
+  body: unknown,
+  token?: string | null,
+): Promise<T> {
   const respuesta = await fetch(`${API_BASE_URL}/api${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
 
@@ -100,11 +107,12 @@ export type Reporte = {
   score_riesgo: number | null;
   nivel_riesgo?: NivelRiesgo;
   analisis: Analisis;
+  detalles_analisis?: string[];
   fecha_reporte: string;
   reportado_por?: string;
 };
 
-// --- HELPER GET REUTILIZABLE ---
+// --- HELPER GET REUTILIZABLE CON /api ---
 
 async function get<T>(path: string): Promise<T> {
   const respuesta = await fetch(`${API_BASE_URL}/api${path}`, {
@@ -137,12 +145,56 @@ export function obtenerReportes(telefonoDestino?: string | null) {
   return get<Reporte[]>(`/reportes${query}`);
 }
 
-export function obtenerReportePorId(id: string) {
-  return get<Reporte>(`/reportes/${id}`);
+export async function obtenerReportePorId(id: string): Promise<Reporte> {
+  try {
+    // 1. Intenta la petición individual directa
+    return await get<Reporte>(`/reportes/${id}`);
+  } catch (err: any) {
+    // 2. Si el backend responde 404 (porque no tiene declarada la ruta GET /:id)
+    if (err.status === 404) {
+      // Trae la lista completa de reportes
+      const todos = await get<Reporte[]>("/reportes");
+      // Busca el reporte que coincida con el ID
+      const encontrado = todos.find((r) => r._id === id);
+
+      if (encontrado) {
+        return encontrado;
+      }
+      throw new ApiError("No se encontró el reporte especificado", 404);
+    }
+    throw err;
+  }
 }
 
 export function crearReportePrueba(body: unknown) {
   return post<{ mensaje: string; reporte: Reporte }>("/reportes", body);
+}
+
+export function reportarMensaje(body: {
+  mensaje: string;
+  numero_remitente?: string;
+  remitente_tecnico?: string;
+  guardar?: boolean;
+}) {
+  return post<Reporte & { detalles_analisis: string[] }>("/reportes", body);
+}
+
+export function reportarAnalisis(
+  body: {
+    mensaje: string;
+    url?: string;
+    categoria?: string;
+    empresa_mencionada?: string;
+    score_riesgo?: number | null;
+    nivel_riesgo?: NivelRiesgo;
+  },
+  token: string,
+) {
+  return post<{ _id: string; fue_reportado: boolean }>(
+    "/historial/reportar",
+    body,
+    token,
+  );
 }
 
 // --- FUNCIONES API PARA ASISTENTE IA ---

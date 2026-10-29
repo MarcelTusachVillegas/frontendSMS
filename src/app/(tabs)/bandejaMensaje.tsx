@@ -119,7 +119,7 @@ export default function BandejaMensaje() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => {
-              // router.push({ pathname: "/detalleMensaje", params: { id: msg.id } });
+              router.push({ pathname: "/detallemensaje", params: { id: msg.id } });
             }}
             style={[styles.card, styles[`card_${msg.riesgo}`]]}
           >
