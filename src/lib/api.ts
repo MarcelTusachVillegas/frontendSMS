@@ -29,10 +29,13 @@ export class ApiError extends Error {
   }
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body: unknown, token?: string | null): Promise<T> {
   const respuesta = await fetch(`${API_BASE_URL}/api${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
 
@@ -167,4 +170,18 @@ export function reportarMensaje(body: {
   guardar?: boolean;
 }) {
   return post<Reporte & { detalles_analisis: string[] }>("/reportes", body);
+}
+
+export function reportarAnalisis(
+  body: {
+    mensaje: string;
+    url?: string;
+    categoria?: string;
+    empresa_mencionada?: string;
+    score_riesgo?: number | null;
+    nivel_riesgo?: NivelRiesgo;
+  },
+  token: string,
+) {
+  return post<{ _id: string; fue_reportado: boolean }>("/historial/reportar", body, token);
 }

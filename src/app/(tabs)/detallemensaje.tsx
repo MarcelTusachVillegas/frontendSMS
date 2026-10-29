@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { obtenerReportePorId, reportarMensaje, type Reporte } from "@/lib/api";
+import { useAuth } from "@/context/auth-context";
+import { obtenerReportePorId, reportarAnalisis, type Reporte } from "@/lib/api";
 
 type Nivel = "alto" | "medio" | "bajo";
 
@@ -66,6 +67,7 @@ function construirMotivos(riesgo: Reporte | null): string[] {
 export default function DetalleMensajeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { token } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const [reporte, setReporte] = useState<Reporte | null>(null);
@@ -107,14 +109,23 @@ export default function DetalleMensajeScreen() {
 
   const handleReportar = async () => {
     if (!reporte || reportando || yaReportado) return;
+    if (!token) {
+      Alert.alert("Sesión requerida", "Inicia sesión para reportar este mensaje.");
+      return;
+    }
     setReportando(true);
     try {
-      await reportarMensaje({
-        mensaje: reporte.mensaje,
-        numero_remitente: reporte.numero_remitente,
-        remitente_tecnico: reporte.remitente_tecnico,
-        guardar: true,
-      });
+      await reportarAnalisis(
+        {
+          mensaje: reporte.mensaje,
+          url: reporte.url,
+          categoria: reporte.categoria,
+          empresa_mencionada: reporte.empresa_mencionada,
+          score_riesgo: reporte.score_riesgo,
+          nivel_riesgo: reporte.nivel_riesgo ?? nivel,
+        },
+        token,
+      );
       setYaReportado(true);
       Alert.alert("Reporte enviado", "Gracias. Tu reporte fue registrado y será analizado.");
     } catch (e) {

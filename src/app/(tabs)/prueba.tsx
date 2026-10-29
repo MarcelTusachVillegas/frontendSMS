@@ -23,7 +23,7 @@ export default function PantallaPrueba() {
     try {
       await crearReportePrueba({
         mensaje:
-          "Hola. CLP$500 fueron abonados a tu cuenta. Registrate, gira la ruleta de bienvenida y con tu primer deposito desbloquea mas premios. https://bit.ly/4bPEqZH",
+          "Hola esta es una prueba para verificar el funcionamiento del sistema. CLP$500 fueron abonados a tu cuenta. Registrate, gira la ruleta de bienvenida y con tu primer deposito desbloquea mas premios. https://bit.ly/4bPEqZH",
         numero_remitente: "desconocido",
         origen: "simulado",
         score_riesgo: 82,
