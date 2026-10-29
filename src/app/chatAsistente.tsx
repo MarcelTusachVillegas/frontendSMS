@@ -1,17 +1,23 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-// 1. Definimos la estructura de un mensaje en TypeScript
+import { consultarAsistenteIA } from "@/lib/api";
+
 interface MensajeChat {
   id: string;
   texto: string;
@@ -20,8 +26,7 @@ interface MensajeChat {
 
 export default function ChatAsistente() {
   const router = useRouter();
-
-  // 2. Estados de la pantalla
+  const insets = useSafeAreaInsets();
   const [mensajes, setMensajes] = useState<MensajeChat[]>([
     {
       id: "1",
@@ -33,13 +38,11 @@ export default function ChatAsistente() {
   const [inputTexto, setInputTexto] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  // 3. Función principal que se comunica con tu Node.js
   const enviarPreguntaIA = async () => {
     if (!inputTexto.trim()) return;
 
     const textoEnviado = inputTexto;
 
-    // Agregamos lo que escribió el usuario a la pantalla
     const nuevoMensajeUsuario: MensajeChat = {
       id: Date.now().toString(),
       texto: textoEnviado,
@@ -47,24 +50,11 @@ export default function ChatAsistente() {
     };
 
     setMensajes((prev) => [...prev, nuevoMensajeUsuario]);
-    setInputTexto(""); // Limpiamos el input
-    setCargando(true); // Mostramos el icono de cargando
+    setInputTexto("");
+    setCargando(true);
 
     try {
-      // ⚠️ IMPORTANTE: Cambia '192.168.X.X' por la IP IPv4 de tu computador en tu red Wi-Fi
-      // Si usas el emulador de Android Studio, usa '10.0.2.2'
-      const response = await fetch(
-        "http://192.168.0.5:3000/api/asistente/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ mensajeUsuario: textoEnviado }),
-        },
-      );
-
-      const data = await response.json();
+      const data = await consultarAsistenteIA(textoEnviado);
 
       if (data.respuesta) {
         const nuevoMensajeIA: MensajeChat = {
@@ -86,12 +76,12 @@ export default function ChatAsistente() {
       };
       setMensajes((prev) => [...prev, mensajeError]);
     } finally {
-      setCargando(false); // Ocultamos el icono de carga
+      setCargando(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Cabecera */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -104,55 +94,73 @@ export default function ChatAsistente() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Lista de Mensajes */}
-      <FlatList
-        data={mensajes}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.chatContainer}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.burbuja,
-              item.remitente === "usuario"
-                ? styles.burbujaUsuario
-                : styles.burbujaIA,
-            ]}
-          >
-            <Text
+      {/* 🛡️ KeyboardAvoidingView empuja todo el contenido hacia arriba al abrir el teclado */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        // En Android a veces ayuda definir un offset si tienes barras de navegación personalizadas
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -45}
+      >
+        {/* Lista de Mensajes */}
+        <FlatList
+          data={mensajes}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.chatContainer}
+          // Esto hace que el chat baje automáticamente al último mensaje cuando escribes o abres el teclado
+          onContentSizeChange={() => {
+            /* opcional: ref?.scrollToEnd() */
+          }}
+          renderItem={({ item }) => (
+            <View
               style={[
-                styles.textoMensaje,
+                styles.burbuja,
                 item.remitente === "usuario"
-                  ? { color: "#fff" }
-                  : { color: "#000" },
+                  ? styles.burbujaUsuario
+                  : styles.burbujaIA,
               ]}
             >
-              {item.texto}
-            </Text>
-          </View>
-        )}
-      />
-
-      {/* Input de texto y botón enviar */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Escribe tu consulta aquí..."
-          value={inputTexto}
-          onChangeText={setInputTexto}
-          multiline
-        />
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={enviarPreguntaIA}
-          disabled={cargando}
-        >
-          {cargando ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={{ fontSize: 20 }}>🚀</Text>
+              <Text
+                style={[
+                  styles.textoMensaje,
+                  item.remitente === "usuario"
+                    ? { color: "#fff" }
+                    : { color: "#000" },
+                ]}
+              >
+                {item.texto}
+              </Text>
+            </View>
           )}
-        </TouchableOpacity>
-      </View>
+        />
+
+        {/* Input de texto y botón enviar (siempre visible sobre el teclado) */}
+        <View
+          style={[
+            styles.inputContainer,
+            { paddingBottom: Math.max(insets.bottom, 10) }, // 👈 2. Sube el input dinámicamente según el celular
+          ]}
+        >
+          <TextInput
+            style={styles.input}
+            placeholder="Escribe tu consulta aquí..."
+            placeholderTextColor="#888"
+            value={inputTexto}
+            onChangeText={setInputTexto}
+            multiline
+          />
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={enviarPreguntaIA}
+            disabled={cargando}
+          >
+            {cargando ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={{ fontSize: 20 }}>🚀</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -165,7 +173,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 15,
     backgroundColor: "#fff",
-    elevation: 3, // Sombra para Android
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   backButton: { padding: 5 },
   headerTitle: { fontSize: 20, fontWeight: "bold", color: "#0d47a1" },
@@ -177,7 +189,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   burbujaUsuario: {
-    backgroundColor: "#0d47a1", // Azul de tu diseño
+    backgroundColor: "#0d47a1",
     alignSelf: "flex-end",
     borderBottomRightRadius: 0,
   },
@@ -190,6 +202,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     padding: 10,
+    marginBottom: 5,
     backgroundColor: "#fff",
     alignItems: "center",
     borderTopWidth: 1,
@@ -203,11 +216,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     maxHeight: 100,
+    color: "#000",
   },
   sendButton: {
     backgroundColor: "#0d47a1",
-    padding: 12,
-    borderRadius: 25,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     marginLeft: 10,
     justifyContent: "center",
     alignItems: "center",

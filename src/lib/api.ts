@@ -11,7 +11,8 @@ function resolverHost(): string {
     Constants.expoConfig?.hostUri ??
     // // @ts-expect-error campo presente en dev builds antiguos
     Constants.manifest2?.extra?.expoGo?.debuggerHost;
-  const ip = typeof debuggerHost === "string" ? debuggerHost.split(":")[0] : null;
+  const ip =
+    typeof debuggerHost === "string" ? debuggerHost.split(":")[0] : null;
 
   if (ip) return `http://${ip}:3000`;
   if (Platform.OS === "android") return "http://10.0.2.2:3000";
@@ -116,7 +117,7 @@ async function get<T>(path: string): Promise<T> {
   if (!respuesta.ok) {
     throw new ApiError(
       `Error HTTP ${respuesta.status}: ${text.substring(0, 100)}`,
-      respuesta.status
+      respuesta.status,
     );
   }
 
@@ -130,7 +131,9 @@ async function get<T>(path: string): Promise<T> {
 // --- FUNCIONES API PARA REPORTES ---
 
 export function obtenerReportes(telefonoDestino?: string | null) {
-  const query = telefonoDestino ? `?telefono_destino=${encodeURIComponent(telefonoDestino)}` : "";
+  const query = telefonoDestino
+    ? `?telefono_destino=${encodeURIComponent(telefonoDestino)}`
+    : "";
   return get<Reporte[]>(`/reportes${query}`);
 }
 
@@ -140,4 +143,14 @@ export function obtenerReportePorId(id: string) {
 
 export function crearReportePrueba(body: unknown) {
   return post<{ mensaje: string; reporte: Reporte }>("/reportes", body);
+}
+
+// --- FUNCIONES API PARA ASISTENTE IA ---
+
+export type AsistenteResponse = {
+  respuesta: string;
+};
+
+export function consultarAsistenteIA(mensajeUsuario: string) {
+  return post<AsistenteResponse>("/asistente/chat", { mensajeUsuario });
 }
