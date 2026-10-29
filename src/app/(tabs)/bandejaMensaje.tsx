@@ -46,7 +46,7 @@ export default function BandejaMensaje() {
 
   const handleAssistantPress = () => {
     // Redirige a la vista del chat con el asistente educativo IA
-    // router.push("/chatAsistente");
+    router.push("/chatAsistente");
   };
 
   const mensajesFiltrados = mensajes.filter(
