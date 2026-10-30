@@ -29,13 +29,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="notificaciones"
-        options={{
-          title: "Alertas",
-          tabBarIcon: () => <Text style={{ fontSize: 22 }}>🔔</Text>,
-        }}
-      />
-      <Tabs.Screen
         name="perfil"
         options={{
           title: "Perfil",

@@ -13,7 +13,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/auth-context";
-import { obtenerReportePorId, reportarAnalisis, type Reporte } from "@/lib/api";
+import {
+  nivelDeHistorial,
+  obtenerHistorial,
+  reportarMensaje,
+  type HistorialItem,
+} from "@/lib/api";
 
 type Nivel = "alto" | "medio" | "bajo";
 
@@ -23,40 +28,19 @@ const COLORES_NIVEL: Record<Nivel, { fuerte: string; etiqueta: string }> = {
   bajo: { fuerte: "#166534", etiqueta: "RIESGO BAJO" },
 };
 
-function normalizarNivel(riesgo: Reporte | null): Nivel {
-  if (!riesgo) return "bajo";
-  if (riesgo.nivel_riesgo) return riesgo.nivel_riesgo;
-  const score = riesgo.score_riesgo ?? 0;
-  if (score >= 70) return "alto";
-  if (score >= 40) return "medio";
-  return "bajo";
-}
-
-/** Construye la lista "Por qué es peligroso" a partir de los detalles del backend. */
-function construirMotivos(riesgo: Reporte | null): string[] {
-  if (!riesgo) return [];
-  if (riesgo.detalles_analisis?.length) {
-    return riesgo.detalles_analisis.map((d) => d.replace(/\s*\(\+\d+\)$/, ""));
-  }
-
+/** Construye la lista "Por qué es peligroso" con los datos guardados en el historial. */
+function construirMotivos(item: HistorialItem | null): string[] {
+  if (!item) return [];
   const motivos: string[] = [];
-  const analisis = riesgo.analisis;
 
-  if (analisis?.coincide_patron_dataset) {
+  if (item.categoria && item.categoria !== "sin_clasificar") {
     motivos.push("Coincide con un patrón de estafa conocido");
   }
-  if ((analisis?.virustotal_maliciosos ?? 0) > 0) {
-    motivos.push(`Enlace marcado como malicioso por ${analisis?.virustotal_maliciosos} antivirus`);
+  if (item.empresa_mencionada && item.empresa_mencionada !== "sin_identificar") {
+    motivos.push(`Dice ser de ${item.empresa_mencionada}`);
   }
-  const dias = analisis?.dominio_dias_antiguedad;
-  if (dias !== null && dias !== undefined && dias < 30) {
-    motivos.push(`El dominio del enlace tiene solo ${dias} días de antigüedad`);
-  }
-  if (riesgo.url) {
+  if (item.url) {
     motivos.push("Contiene un enlace (no lo abras)");
-  }
-  if (riesgo.categoria && riesgo.categoria !== "sin_clasificar") {
-    motivos.push(`Tipo de estafa identificado: ${riesgo.categoria.replace(/_/g, " ")}`);
   }
   if (motivos.length === 0) {
     motivos.push("El mensaje fue analizado y no presenta señales claras de fraude");
@@ -70,7 +54,7 @@ export default function DetalleMensajeScreen() {
   const { token } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string }>();
 
-  const [reporte, setReporte] = useState<Reporte | null>(null);
+  const [item, setItem] = useState<HistorialItem | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reportando, setReportando] = useState(false);
@@ -82,50 +66,54 @@ export default function DetalleMensajeScreen() {
   };
 
   const cargar = useCallback(async () => {
-    if (!id) return;
+    if (!id || !token) return;
     setCargando(true);
     setError(null);
     try {
-      const data = await obtenerReportePorId(id);
-      setReporte(data);
-      setYaReportado(Boolean(data.reportado_por) && data.estado === "reportado");
+      const lista = await obtenerHistorial(token);
+      const encontrado = lista.find((h) => h._id === id);
+      if (!encontrado) throw new Error("No se encontró el mensaje en tu historial");
+      setItem(encontrado);
+      setYaReportado(encontrado.fue_reportado);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el mensaje");
     } finally {
       setCargando(false);
     }
-  }, [id]);
+  }, [id, token]);
 
   useEffect(() => {
     cargar();
   }, [cargar]);
 
-  const nivel = normalizarNivel(reporte);
+  const nivel = item ? nivelDeHistorial(item) : "bajo";
   const colores = COLORES_NIVEL[nivel];
   const alarmaActiva = nivel === "alto";
 
   const remitente =
-    reporte?.numero_remitente || reporte?.remitente_tecnico || "Número desconocido";
+    item && item.empresa_mencionada && item.empresa_mencionada !== "sin_identificar"
+      ? item.empresa_mencionada
+      : "Número desconocido";
 
   const handleReportar = async () => {
-    if (!reporte || reportando || yaReportado) return;
+    if (!item || reportando || yaReportado) return;
     if (!token) {
       Alert.alert("Sesión requerida", "Inicia sesión para reportar este mensaje.");
       return;
     }
     setReportando(true);
     try {
-      await reportarAnalisis(
-        {
-          mensaje: reporte.mensaje,
-          url: reporte.url,
-          categoria: reporte.categoria,
-          empresa_mencionada: reporte.empresa_mencionada,
-          score_riesgo: reporte.score_riesgo,
-          nivel_riesgo: reporte.nivel_riesgo ?? nivel,
-        },
-        token,
-      );
+      // Regla: un usuario no puede reportar dos veces el mismo mensaje.
+      const lista = await obtenerHistorial(token);
+      const yaExiste = lista.some((h) => h.mensaje === item.mensaje && h.fue_reportado);
+      if (yaExiste) {
+        setYaReportado(true);
+        Alert.alert("Ya reportado", "Ya habías reportado este mensaje.");
+        return;
+      }
+
+      // Se reenvía el mismo texto exacto, con el token del usuario.
+      await reportarMensaje({ mensaje: item.mensaje, guardar: true }, token);
       setYaReportado(true);
       Alert.alert("Reporte enviado", "Gracias. Tu reporte fue registrado y será analizado.");
     } catch (e) {
@@ -136,7 +124,7 @@ export default function DetalleMensajeScreen() {
   };
 
   const handleAsistencia = () => {
-    router.push("/centroEducativo");
+    router.push("/chatAsistente");
   };
 
   return (
@@ -183,7 +171,7 @@ export default function DetalleMensajeScreen() {
           {/* Card del Mensaje */}
           <View style={styles.messageCard}>
             <Text style={styles.messageTitle}>{remitente}</Text>
-            <Text style={styles.messageBody}>{reporte?.mensaje ?? "(Mensaje vacío)"}</Text>
+            <Text style={styles.messageBody}>{item?.mensaje ?? "(Mensaje vacío)"}</Text>
           </View>
 
           {/* Score de Riesgo */}
@@ -191,7 +179,7 @@ export default function DetalleMensajeScreen() {
             <Text style={styles.sectionLabel}>Score de riesgo:</Text>
             <View style={styles.scoreRow}>
               <Text style={[styles.scoreValue, { color: colores.fuerte }]}>
-                {reporte?.score_riesgo ?? 0}/100
+                {item?.score_riesgo ?? 0}/100
               </Text>
               <Text style={[styles.scoreBadgeText, { color: colores.fuerte }]}>
                 {colores.etiqueta}
@@ -205,7 +193,7 @@ export default function DetalleMensajeScreen() {
               {alarmaActiva ? "Por qué es peligroso:" : "Resultado del análisis:"}
             </Text>
             <View style={styles.bulletList}>
-              {construirMotivos(reporte).map((motivo, i) => (
+              {construirMotivos(item).map((motivo, i) => (
                 <Text key={i} style={styles.bulletItem}>
                   • {motivo}
                 </Text>
