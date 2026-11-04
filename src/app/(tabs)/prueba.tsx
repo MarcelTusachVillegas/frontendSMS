@@ -1,8 +1,10 @@
 import {
   crearReportePrueba,
-  obtenerReportes,
-  Reporte,
+  nivelDeHistorial,
+  obtenerHistorial,
+  type HistorialItem,
 } from "@/lib/api";
+import { useAuth } from "@/context/auth-context";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -16,49 +18,69 @@ import {
 
 export default function PantallaPrueba() {
   const router = useRouter();
-  const [reportesGuardados, setReportesGuardados] = useState<Reporte[]>([]);
+  const { token } = useAuth();
+  const [historialGuardado, setHistorialGuardado] = useState<HistorialItem[]>([]);
 
   // Función 1: Enviar un SMS de prueba (POST)
+  // guardar:false => el backend NO escribe en la colección Reporte,
+  // pero SÍ registra el análisis en el historial del usuario autenticado
+  // (colección HistorialAnalisis). El token es obligatorio aquí.
   const probarConexionPOST = async () => {
+    if (!token) {
+      Alert.alert(
+        "Sesión requerida",
+        "Inicia sesión con tu OTP para que el análisis se guarde en tu historial.",
+      );
+      return;
+    }
+
     try {
-      await crearReportePrueba({
-        mensaje:
-          "Hola esta es una prueba para verificar el funcionamiento del sistema. CLP$500 fueron abonados a tu cuenta. Registrate, gira la ruleta de bienvenida y con tu primer deposito desbloquea mas premios. https://bit.ly/4bPEqZH",
-        numero_remitente: "desconocido",
-        origen: "simulado",
-        score_riesgo: 82,
-        guardar: true,
-      });
+      await crearReportePrueba(
+        {
+          mensaje:
+            "Hola esta es una prueba para verificar el funcionamiento del sistema. CLP$500 fueron abonados a tu cuenta. Registrate, gira la ruleta de bienvenida y con tu primer deposito desbloquea mas premios. https://bit.ly/4bPEqZH",
+          guardar: false,
+        },
+        token,
+      );
 
       Alert.alert(
         "¡POST Exitoso!",
-        "Mensaje enviado y guardado en el backend.",
+        "Mensaje analizado y guardado en tu historial (HistorialAnalisis).",
       );
     } catch (error: any) {
       Alert.alert("Error en POST", error.message);
     }
   };
 
-  // Función 2: Obtener el historial completo
+  // Función 2: Obtener el historial del usuario (GET /api/historial)
   const probarConexionGET = async () => {
+    if (!token) {
+      Alert.alert(
+        "Sesión requerida",
+        "Inicia sesión con tu OTP para leer tu historial.",
+      );
+      return;
+    }
+
     try {
-      const todosLosDatos = await obtenerReportes();
+      const todoElHistorial = await obtenerHistorial(token);
 
       const inicioDeHoy = new Date();
       inicioDeHoy.setHours(0, 0, 0, 0);
 
-      const datosDeHoy = todosLosDatos.filter((reporte) => {
-        const fechaDelReporte = new Date(reporte.fecha_reporte);
-        return fechaDelReporte >= inicioDeHoy;
+      const datosDeHoy = todoElHistorial.filter((item) => {
+        const fechaDelAnalisis = new Date(item.fecha_analisis);
+        return fechaDelAnalisis >= inicioDeHoy;
       });
 
       // Muestra los de hoy o todos si no hay registros de hoy para pruebas
-      const aMostrar = datosDeHoy.length > 0 ? datosDeHoy : todosLosDatos;
-      setReportesGuardados(aMostrar);
+      const aMostrar = datosDeHoy.length > 0 ? datosDeHoy : todoElHistorial;
+      setHistorialGuardado(aMostrar);
 
       Alert.alert(
         "¡Filtrado Exitoso!",
-        `El backend mandó ${todosLosDatos.length} reportes, mostrando ${aMostrar.length} resultados.`,
+        `El backend mandó ${todoElHistorial.length} análisis, mostrando ${aMostrar.length} resultados.`,
       );
     } catch (error: any) {
       Alert.alert("Error de red", error.message);
@@ -86,81 +108,52 @@ export default function PantallaPrueba() {
       </View>
 
       <ScrollView style={styles.lista}>
-        {Array.isArray(reportesGuardados) &&
-          reportesGuardados.map((reporte, index) => (
-            <View key={reporte._id || index} style={styles.tarjeta}>
-              <Text style={styles.tarjetaTitulo}>Reporte #{index + 1}</Text>
+        {Array.isArray(historialGuardado) &&
+          historialGuardado.map((item, index) => (
+            <View key={item._id || index} style={styles.tarjeta}>
+              <Text style={styles.tarjetaTitulo}>Análisis #{index + 1}</Text>
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Mensaje: </Text>
-                {reporte?.mensaje || "Sin texto"}
-              </Text>
-
-              <Text style={styles.textoGeneral}>
-                <Text style={styles.negrita}>Remitente: </Text>
-                {reporte?.numero_remitente ||
-                  reporte?.remitente_tecnico ||
-                  "desconocido"}
+                {item?.mensaje || "Sin texto"}
               </Text>
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Empresa: </Text>
-                {reporte?.empresa_mencionada || "No identificada"}
+                {item?.empresa_mencionada || "sin_identificar"}
               </Text>
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>URL Sospechosa: </Text>
-                {reporte?.url || "Sin URL"}
+                {item?.url || "Sin URL"}
               </Text>
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Categoría: </Text>
-                {reporte?.categoria || "sin_clasificar"}
+                {item?.categoria || "sin_clasificar"}
               </Text>
 
               <Text style={styles.textoGeneral}>
-                <Text style={styles.negrita}>Estado: </Text>
-                {reporte?.estado || "pendiente"}
+                <Text style={styles.negrita}>Nivel de Riesgo: </Text>
+                {nivelDeHistorial(item).toUpperCase()}
               </Text>
 
               <Text style={styles.textoGeneral}>
                 <Text style={styles.negrita}>Score Riesgo: </Text>
-                {reporte?.score_riesgo !== null &&
-                reporte?.score_riesgo !== undefined
-                  ? reporte?.score_riesgo
+                {item?.score_riesgo !== null && item?.score_riesgo !== undefined
+                  ? item?.score_riesgo
                   : "Calculando..."}
               </Text>
 
               <Text style={styles.textoGeneral}>
-                <Text style={styles.negrita}>VirusTotal (Maliciosos): </Text>
-                {reporte?.analisis?.virustotal_maliciosos !== null &&
-                reporte?.analisis?.virustotal_maliciosos !== undefined
-                  ? reporte?.analisis?.virustotal_maliciosos
-                  : "Sin datos"}
+                <Text style={styles.negrita}>Reportado formalmente: </Text>
+                {item?.fue_reportado ? "Sí" : "No"}
               </Text>
 
               <Text style={styles.textoGeneral}>
-                <Text style={styles.negrita}>Antigüedad Dominio: </Text>
-                {reporte?.analisis?.dominio_dias_antiguedad !== null &&
-                reporte?.analisis?.dominio_dias_antiguedad !== undefined
-                  ? `${reporte?.analisis?.dominio_dias_antiguedad} días`
-                  : "Link Caído"}
-              </Text>
-
-              <Text style={styles.textoGeneral}>
-                <Text style={styles.negrita}>Patrón Conocido: </Text>
-                {reporte?.analisis?.coincide_patron_dataset ? "Sí" : "No"}
-              </Text>
-
-              <Text style={styles.textoGeneral}>
-                <Text style={styles.negrita}>Reportado por: </Text>
-                {reporte?.reportado_por || "Sistema/Prueba"}
-              </Text>
-
-              <Text style={styles.textoGeneral}>
-                <Text style={styles.negrita}>Fecha: </Text>
-                {reporte?.fecha_reporte
-                  ? new Date(reporte.fecha_reporte).toLocaleDateString("es-CL")
+                <Text style={styles.negrita}>Fecha de análisis: </Text>
+                {item?.fecha_analisis
+                  ? new Date(item.fecha_analisis).toLocaleString("es-CL")
                   : "Sin fecha"}
               </Text>
 
@@ -169,15 +162,15 @@ export default function PantallaPrueba() {
                   title="Ver Detalle de este Mensaje"
                   color="#5856D6"
                   onPress={() => {
-                    if (reporte._id) {
+                    if (item._id) {
                       router.push({
                         pathname: "/detallemensaje",
-                        params: { id: reporte._id },
+                        params: { id: item._id },
                       });
                     } else {
                       Alert.alert(
                         "Sin ID",
-                        "Este reporte no tiene un ID de MongoDB asociado."
+                        "Este análisis no tiene un ID de MongoDB asociado."
                       );
                     }
                   }}

@@ -1,7 +1,8 @@
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -9,6 +10,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useAuth } from "@/context/auth-context";
+import { nivelDeHistorial, obtenerHistorial, type HistorialItem } from "@/lib/api";
 
 export interface MensajeSMS {
   id: string;
@@ -19,30 +23,67 @@ export interface MensajeSMS {
   riesgo: "seguro" | "fraude" | "sospechoso";
 }
 
+function formatearTiempo(iso: string): string {
+  const fecha = new Date(iso);
+  const hoy = new Date();
+  if (fecha.toDateString() === hoy.toDateString()) {
+    return fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+  }
+  return fecha.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" });
+}
+
+function aMensajeSMS(h: HistorialItem): MensajeSMS {
+  const nivel = nivelDeHistorial(h);
+  const riesgo = nivel === "alto" ? "fraude" : nivel === "medio" ? "sospechoso" : "seguro";
+  const estado = riesgo === "fraude" ? "FRAUDE" : riesgo === "sospechoso" ? "Sospechoso" : "Seguro";
+  const remitente =
+    h.empresa_mencionada && h.empresa_mencionada !== "sin_identificar"
+      ? h.empresa_mencionada
+      : "Número desconocido";
+  return {
+    id: h._id,
+    remitente,
+    texto: h.mensaje,
+    tiempo: formatearTiempo(h.fecha_analisis),
+    estado,
+    riesgo,
+  };
+}
+
 export default function BandejaMensaje() {
   const router = useRouter();
+  const { token } = useAuth();
 
   const [mensajes, setMensajes] = useState<MensajeSMS[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [refrescando, setRefrescando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleNotificationsPress = () => {
-    router.push("/notificaciones");
-  };
+  const cargar = useCallback(
+    async (esRefresco = false) => {
+      if (!token) return;
+      if (esRefresco) setRefrescando(true);
+      setError(null);
+      try {
+        const historial = await obtenerHistorial(token);
+        setMensajes(historial.map(aMensajeSMS));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "No se pudo cargar tus mensajes");
+      } finally {
+        setCargando(false);
+        setRefrescando(false);
+      }
+    },
+    [token],
+  );
 
-  const handleProfilePress = () => {
-    // Ejemplo de navegación a la configuración del usuario:
-    router.push("/perfil");
-  };
-
-  const centroEducativo = () => {
-    // Ejemplo de navegación a la configuración del usuario:
-    router.push("/centroEducativo");
-  };
-
-  const prueba = () => {
-    // Ejemplo de navegación a la configuración del usuario:
-    router.push("/prueba");
-  };
+  // Recarga la bandeja cada vez que el usuario vuelve a esta pestaña
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   const handleAssistantPress = () => {
     // Redirige a la vista del chat con el asistente educativo IA
@@ -106,12 +147,19 @@ export default function BandejaMensaje() {
         data={mensajesFiltrados}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refrescando} onRefresh={() => cargar(true)} />
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              {searchQuery
-                ? "No se encontraron mensajes con la búsqueda."
-                : "No hay mensajes analizados. Los SMS entrantes aparecerán aquí."}
+              {cargando
+                ? "Cargando tus mensajes..."
+                : error
+                  ? error
+                  : searchQuery
+                    ? "No se encontraron mensajes con la búsqueda."
+                    : "No hay mensajes analizados. Los SMS entrantes aparecerán aquí."}
             </Text>
           </View>
         }
