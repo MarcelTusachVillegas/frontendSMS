@@ -7,7 +7,7 @@ import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { solicitarOtp, verificarOtp } from "@/lib/api";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Modal,
@@ -20,9 +20,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import RNAndroidNotificationListener from "react-native-android-notification-listener";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
+  //Lectura sms
+
   const router = useRouter();
   const { telefono: telefonoAutenticado, iniciarSesion } = useAuth();
 
@@ -91,7 +94,10 @@ export default function HomeScreen() {
     setCargando(true);
     setErrorOtp(null);
     try {
-      const { token, usuario } = await verificarOtp(telefonoPendiente, codigoOtp);
+      const { token, usuario } = await verificarOtp(
+        telefonoPendiente,
+        codigoOtp,
+      );
       iniciarSesion({ telefono: usuario.telefono, token, usuario });
       setModalVisible(false);
       setPaso("telefono");
@@ -107,17 +113,62 @@ export default function HomeScreen() {
     }
   };
 
-  // Función de Éxito - Ir a la bandeja
-  const aceptarPermiso = () => {
-    setPermisoModalVisible(false);
-    router.replace("/(tabs)/bandejaMensaje");
+  // --- LÓGICA DE NOTIFICACIONES ---
+
+  // 1. Verifica silenciosamente si el permiso ya fue otorgado
+  useEffect(() => {
+    const verificarEstadoPermiso = async () => {
+      if (Platform.OS !== "android") return;
+
+      try {
+        const status =
+          await RNAndroidNotificationListener.getPermissionStatus();
+        if (status === "authorized") {
+          console.log("El permiso de notificaciones ya está concedido.");
+        }
+      } catch (error) {
+        console.warn("Error al verificar estado de permisos:", error);
+      }
+    };
+
+    verificarEstadoPermiso();
+  }, []);
+
+  // 2. Función de Éxito - Dispara la configuración nativa
+  const aceptarPermiso = async () => {
+    setPermisoModalVisible(false); // Cierra tu modal UI
+
+    if (Platform.OS === "android") {
+      try {
+        const status =
+          await RNAndroidNotificationListener.getPermissionStatus();
+
+        if (status !== "authorized") {
+          // Esto abre la pantalla de Ajustes del teléfono llamada "Acceso a notificaciones"
+          RNAndroidNotificationListener.requestPermission();
+        }
+
+        // Avanzamos a la bandeja
+        //router.replace("/(tabs)/bandejaMensaje");
+      } catch (error) {
+        console.warn("Error al solicitar el permiso:", error);
+        //router.replace("/(tabs)/bandejaMensaje");
+      }
+    } else {
+      //router.replace("/(tabs)/bandejaMensaje");
+    }
   };
 
   // Función de Cancelación
   const rechazarPermiso = () => {
     setPermisoModalVisible(false);
-    Alert.alert("No concedido", "Has rechazado el permiso.");
+    Alert.alert(
+      "No concedido",
+      "Has rechazado el permiso. Puedes activarlo luego en la configuración.",
+    );
   };
+
+  // --- FIN LÓGICA NOTIFICACIONES ---
 
   return (
     <ThemedView style={styles.container}>
@@ -137,13 +188,16 @@ export default function HomeScreen() {
           </ThemedView>
 
           <ThemedText style={styles.description}>
-            Analizamos tus mensajes para detectar fraudes (smishing). Necesitamos tu
-            numero de telefono y permiso para leer SMS y así avisarte de riesgos. Es
-            seguro y privado.
+            Analizamos tus mensajes para detectar fraudes (smishing).
+            Necesitamos tu numero de telefono y permiso para leer SMS y así
+            avisarte de riesgos. Es seguro y privado.
           </ThemedText>
 
           {/* BOTÓN 1: Ingresar Número */}
-          <TouchableOpacity style={styles.botonAbrir} onPress={abrirModalTelefono}>
+          <TouchableOpacity
+            style={styles.botonAbrir}
+            onPress={abrirModalTelefono}
+          >
             <Text style={styles.textoBoton}>
               {telefonoAutenticado ? "Cambiar número" : "Ingresar mi número"}
             </Text>
@@ -343,8 +397,9 @@ export default function HomeScreen() {
                     { textAlign: "center", fontSize: 15 },
                   ]}
                 >
-                  Para protegerte de las estafas, necesitamos revisar tus mensajes
-                  entrantes. Solo analizaremos los enlaces peligrosos para cuidarte.
+                  Para protegerte de las estafas, necesitamos revisar tus
+                  mensajes entrantes. Solo analizaremos los enlaces peligrosos
+                  para cuidarte.
                   {"\n\n"}
                   ¿Autorizas el análisis de tus mensajes?
                 </Text>

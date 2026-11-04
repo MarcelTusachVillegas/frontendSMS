@@ -137,7 +137,7 @@ export default function ChatAsistente() {
         <View
           style={[
             styles.inputContainer,
-            { paddingBottom: Math.max(insets.bottom, 10) }, // 👈 2. Sube el input dinámicamente según el celular
+            { paddingBottom: Math.max(insets.bottom, 10) },
           ]}
         >
           <TextInput
