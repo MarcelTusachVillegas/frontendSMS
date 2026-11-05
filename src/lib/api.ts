@@ -11,7 +11,8 @@ function resolverHost(): string {
     Constants.expoConfig?.hostUri ??
     // // @ts-expect-error campo presente en dev builds antiguos
     Constants.manifest2?.extra?.expoGo?.debuggerHost;
-  const ip = typeof debuggerHost === "string" ? debuggerHost.split(":")[0] : null;
+  const ip =
+    typeof debuggerHost === "string" ? debuggerHost.split(":")[0] : null;
 
   if (ip) return `http://${ip}:3000`;
   if (Platform.OS === "android") return "http://10.0.2.2:3000";
@@ -29,7 +30,11 @@ export class ApiError extends Error {
   }
 }
 
-async function post<T>(path: string, body: unknown, token?: string | null): Promise<T> {
+async function post<T>(
+  path: string,
+  body: unknown,
+  token?: string | null,
+): Promise<T> {
   const respuesta = await fetch(`${API_BASE_URL}/api${path}`, {
     method: "POST",
     headers: {
@@ -123,7 +128,7 @@ async function get<T>(path: string, token?: string | null): Promise<T> {
   if (!respuesta.ok) {
     throw new ApiError(
       `Error HTTP ${respuesta.status}: ${text.substring(0, 100)}`,
-      respuesta.status
+      respuesta.status,
     );
   }
 
@@ -137,7 +142,9 @@ async function get<T>(path: string, token?: string | null): Promise<T> {
 // --- FUNCIONES API PARA REPORTES ---
 
 export function obtenerReportes(telefonoDestino?: string | null) {
-  const query = telefonoDestino ? `?telefono_destino=${encodeURIComponent(telefonoDestino)}` : "";
+  const query = telefonoDestino
+    ? `?telefono_destino=${encodeURIComponent(telefonoDestino)}`
+    : "";
   return get<Reporte[]>(`/reportes${query}`);
 }
 
@@ -176,7 +183,11 @@ export function crearReportePrueba(body: unknown, token?: string | null) {
  * registra en el historial del usuario (la bandeja de entrada de la app).
  */
 export function analizarMensaje(mensaje: string, token: string) {
-  return post<RespuestaAnalisis>("/reportes", { mensaje, guardar: false }, token);
+  return post<RespuestaAnalisis>(
+    "/reportes",
+    { mensaje, guardar: false },
+    token,
+  );
 }
 
 /**
@@ -219,25 +230,43 @@ function deduplicarPorMensaje(lista: HistorialItem[]): HistorialItem[] {
     let mejor = actual;
     if (h.fue_reportado !== actual.fue_reportado) {
       mejor = h.fue_reportado ? h : actual;
-    } else if (new Date(h.fecha_analisis).getTime() > new Date(actual.fecha_analisis).getTime()) {
+    } else if (
+      new Date(h.fecha_analisis).getTime() >
+      new Date(actual.fecha_analisis).getTime()
+    ) {
       mejor = h;
     }
     porMensaje.set(h.mensaje, mejor);
   }
   return Array.from(porMensaje.values()).sort(
-    (a, b) => new Date(b.fecha_analisis).getTime() - new Date(a.fecha_analisis).getTime(),
+    (a, b) =>
+      new Date(b.fecha_analisis).getTime() -
+      new Date(a.fecha_analisis).getTime(),
   );
 }
 
-export async function obtenerHistorial(token: string): Promise<HistorialItem[]> {
+export async function obtenerHistorial(
+  token: string,
+): Promise<HistorialItem[]> {
   const lista = await get<HistorialItem[]>("/historial", token);
   return deduplicarPorMensaje(lista);
 }
 
-export function nivelDeHistorial(item: HistorialItem): "alto" | "medio" | "bajo" {
+export function nivelDeHistorial(
+  item: HistorialItem,
+): "alto" | "medio" | "bajo" {
   if (item.nivel_riesgo) return item.nivel_riesgo;
   const score = item.score_riesgo ?? 0;
   if (score >= 70) return "alto";
   if (score >= 40) return "medio";
   return "bajo";
+}
+
+// --- FUNCIONES API PARA ASISTENTE IA ---
+export type AsistenteResponse = {
+  respuesta: string;
+};
+
+export function consultarAsistenteIA(mensajeUsuario: string) {
+  return post<AsistenteResponse>("/asistente/chat", { mensajeUsuario });
 }
