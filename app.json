@@ -17,7 +17,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "permissions": [],
+      "permissions": [
+        "android.permission.RECEIVE_SMS",
+        "android.permission.READ_SMS",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING"
+      ],
       "package": "com.capstone.antifraude",
       "predictiveBackGestureEnabled": false
     },
@@ -39,7 +45,9 @@
       "expo-image",
       "expo-status-bar",
       "expo-web-browser",
-      "./withNotificationService.js"
+      "./withNotificationService.js",
+      "./withSmsReceiver.js",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -52,8 +60,9 @@
         }
       },
       "eas": {
-        "projectId": "e3d98dc4-211c-4bbe-8e8c-6b47b147e415"
+        "projectId": "a088553b-ee8d-470c-97f6-3bae8e37840f"
       }
-    }
+    },
+    "owner": "sms-security"
   }
 }

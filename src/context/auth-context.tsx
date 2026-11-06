@@ -1,13 +1,19 @@
 import {
-    createContext,
-    useCallback,
-    useContext,
-    useMemo,
-    useState,
-    type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
 } from "react";
 
 import type { Usuario } from "@/lib/api";
+import {
+  getTokenPersistido,
+  removeTokenPersistido,
+  setTokenPersistido,
+} from "@/lib/token-store";
 
 type AuthContextValue = {
   /** Número confirmado con OTP, ej: "+56932262955". null = no autenticado. */
@@ -18,7 +24,11 @@ type AuthContextValue = {
   /** true cuando ya se completó la verificación OTP. */
   autenticado: boolean;
   /** Guarda la sesión tras un OTP válido. */
-  iniciarSesion: (datos: { telefono: string; token: string; usuario: Usuario }) => void;
+  iniciarSesion: (datos: {
+    telefono: string;
+    token: string;
+    usuario: Usuario;
+  }) => void;
   /** Cierra la sesión local (Cerrar Sesión del perfil). */
   cerrarSesion: () => void;
 };
@@ -30,16 +40,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
 
-  const iniciarSesion = useCallback<AuthContextValue["iniciarSesion"]>((datos) => {
-    setTelefono(datos.telefono);
-    setToken(datos.token);
-    setUsuario(datos.usuario);
+  // Intentar hidratar el token persistido al montar el proveedor
+  useEffect(() => {
+    getTokenPersistido().then((storedToken) => {
+      if (storedToken) {
+        setToken(storedToken);
+      }
+    });
   }, []);
 
-  const cerrarSesion = useCallback(() => {
+  const iniciarSesion = useCallback<AuthContextValue["iniciarSesion"]>(
+    async (datos) => {
+      setTelefono(datos.telefono);
+      setToken(datos.token);
+      setUsuario(datos.usuario);
+      // Persistir el token de forma asíncrona
+      await setTokenPersistido(datos.token);
+    },
+    [],
+  );
+
+  const cerrarSesion = useCallback(async () => {
     setTelefono(null);
     setToken(null);
     setUsuario(null);
+    // Eliminar el token del SecureStore
+    await removeTokenPersistido();
   }, []);
 
   const value = useMemo<AuthContextValue>(

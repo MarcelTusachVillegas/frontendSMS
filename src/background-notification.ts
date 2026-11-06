@@ -1,34 +1,75 @@
+import { analizarMensaje } from "@/lib/api";
+import { getTokenPersistido } from "@/lib/token-store";
 import { AppRegistry } from "react-native";
 
-// Esta función se ejecutará silenciosamente cada vez que llegue una notificación
+// ============================================================================
+// VÍA B: Tarea Headless para Notificaciones (react-native-android-notification-listener)
+// ============================================================================
 const headlessNotificationListener = async ({ notification }: any) => {
-  if (notification) {
-    try {
-      // La librería entrega los datos como un string JSON, debemos convertirlo a objeto
-      const data = JSON.parse(notification);
+  if (!notification) return;
 
-      const remitente = data.title; // Generalmente el nombre del contacto o número
-      const textoMensaje = data.text; // El contenido real del mensaje
-      const aplicacion = data.app; // El ID de la app (ej: com.google.android.apps.messaging)
+  try {
+    const data = JSON.parse(notification);
+    const remitente = data.title;
+    const textoMensaje = data.text;
+    const aplicacion = data.app;
 
-      // Imprimimos en la terminal para confirmar que lo atrapamos
-      console.log(`\n[NUEVA NOTIFICACIÓN INTERCEPTADA]`);
-      console.log(`De: ${remitente}`);
-      console.log(`Texto: ${textoMensaje}`);
-      console.log(`App de origen: ${aplicacion}\n`);
+    console.log(`\n[VÍA B - NOTIFICACIÓN INTERCEPTADA]`);
+    console.log(`De: ${remitente} | App: ${aplicacion}`);
+    console.log(`Texto: ${textoMensaje}\n`);
 
-      // ---------------------------------------------------------
-      // AQUÍ IRÁ LA CONEXIÓN A TU BACKEND PARA ENVIAR 'textoMensaje'
-      // Y EVALUARLO CON LA IA CONTRA SMISHING
-      // ---------------------------------------------------------
-    } catch (error) {
-      console.error("Error procesando la notificación:", error);
+    const token = await getTokenPersistido();
+    if (!token) {
+      console.log("[VÍA B] Sin token guardado. Omitiendo envío al backend.");
+      return;
     }
+
+    const res = await analizarMensaje(textoMensaje, token);
+    console.log("[VÍA B] Resultado del análisis:", res);
+  } catch (error) {
+    console.error("[VÍA B] Error procesando notificación:", error);
   }
 };
 
-// Es OBLIGATORIO registrar la tarea con este nombre exacto para que la librería la encuentre
+// ============================================================================
+// VÍA A: Tarea Headless para BroadcastReceiver de SMS Nativo
+// ============================================================================
+type SmsTaskData = {
+  sender?: string;
+  message?: string;
+};
+
+const smsAnalyzerTask = async (taskData: SmsTaskData) => {
+  const { sender, message } = taskData;
+  if (!message) return;
+
+  console.log(`\n[VÍA A - SMS NATIVO RECIBIDO]`);
+  console.log(`De: ${sender}`);
+  console.log(`Texto: ${message}\n`);
+
+  const token = await getTokenPersistido();
+  if (!token) {
+    console.log("[VÍA A] Sin token guardado. Omitiendo envío al backend.");
+    return;
+  }
+
+  try {
+    const res = await analizarMensaje(message, token);
+    console.log("[VÍA A] Resultado del análisis backend:", res);
+  } catch (error) {
+    console.error("[VÍA A] Backend no disponible o falló la petición:", error);
+  }
+};
+
+// ============================================================================
+// Registro de Tareas Headless en AppRegistry
+// ============================================================================
 AppRegistry.registerHeadlessTask(
   "RNAndroidNotificationListenerHeadlessJs",
-  () => headlessNotificationListener,
+  () => headlessNotificationListener
+);
+
+AppRegistry.registerHeadlessTask(
+  "SMSAnalyzerTask",
+  () => smsAnalyzerTask
 );

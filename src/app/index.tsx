@@ -7,10 +7,13 @@ import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { solicitarOtp, verificarOtp } from "@/lib/api";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  AppState,
+  type AppStateStatus,
   Modal,
+  PermissionsAndroid,
   Platform,
   Pressable,
   ScrollView,
@@ -24,8 +27,6 @@ import RNAndroidNotificationListener from "react-native-android-notification-lis
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  //Lectura sms
-
   const router = useRouter();
   const { telefono: telefonoAutenticado, iniciarSesion } = useAuth();
 
@@ -42,13 +43,13 @@ export default function HomeScreen() {
   const [codigoSimulado, setCodigoSimulado] = useState<string | null>(null);
   const [telefonoPendiente, setTelefonoPendiente] = useState("");
 
-  // 1. Limpia el texto en vivo (solo deja números)
+  // Limpia el texto en vivo (solo deja números)
   const manejarIngresoNumero = (texto: string) => {
     const soloNumeros = texto.replace(/[^0-9]/g, "");
     setTelefonoIngresado(soloNumeros);
   };
 
-  // Abrir Modal de Teléfono resetando estados
+  // Abrir Modal de Teléfono reseteando estados
   const abrirModalTelefono = () => {
     setPaso("telefono");
     setErrorOtp(null);
@@ -113,58 +114,85 @@ export default function HomeScreen() {
     }
   };
 
-  // --- LÓGICA DE NOTIFICACIONES ---
+  // --- LÓGICA DE NOTIFICACIONES Y VERIFICACIÓN ---
 
-  // 1. Verifica silenciosamente si el permiso ya fue otorgado
+  // Verificar estado de permisos y redirigir si todo está autorizado
+  const verificarEstadoPermiso = useCallback(async () => {
+    if (Platform.OS !== "android") return;
+
+    try {
+      // 1. Permiso nativo RECEIVE_SMS
+      const hasSmsPermission = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.RECEIVE_SMS
+      );
+
+      // 2. Permiso especial de escucha de notificaciones
+      const status = await RNAndroidNotificationListener.getPermissionStatus();
+      const hasNotificationListener = status === "authorized";
+
+      if (hasSmsPermission && hasNotificationListener) {
+        console.log("Todos los permisos están concedidos. Redirigiendo...");
+        // Redirige a la vista principal de la app
+        router.replace("/(tabs)/bandejaMensaje");
+      }
+    } catch (error) {
+      console.warn("Error al verificar estado de permisos:", error);
+    }
+  }, [router]);
+
+  // Verificar al montar la pantalla
   useEffect(() => {
-    const verificarEstadoPermiso = async () => {
-      if (Platform.OS !== "android") return;
-
-      try {
-        const status =
-          await RNAndroidNotificationListener.getPermissionStatus();
-        if (status === "authorized") {
-          console.log("El permiso de notificaciones ya está concedido.");
-        }
-      } catch (error) {
-        console.warn("Error al verificar estado de permisos:", error);
-      }
-    };
-
     verificarEstadoPermiso();
-  }, []);
+  }, [verificarEstadoPermiso]);
 
-  // 2. Función de Éxito - Dispara la configuración nativa
-  const aceptarPermiso = async () => {
-    setPermisoModalVisible(false); // Cierra tu modal UI
-
-    if (Platform.OS === "android") {
-      try {
-        const status =
-          await RNAndroidNotificationListener.getPermissionStatus();
-
-        if (status !== "authorized") {
-          // Esto abre la pantalla de Ajustes del teléfono llamada "Acceso a notificaciones"
-          RNAndroidNotificationListener.requestPermission();
+  // ESCOLTA DE APPSTATE: Detecta cuando el usuario vuelve de Ajustes a la App
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      (nextAppState: AppStateStatus) => {
+        if (nextAppState === "active") {
+          verificarEstadoPermiso();
         }
-
-        // Avanzamos a la bandeja
-        //router.replace("/(tabs)/bandejaMensaje");
-      } catch (error) {
-        console.warn("Error al solicitar el permiso:", error);
-        //router.replace("/(tabs)/bandejaMensaje");
       }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [verificarEstadoPermiso]);
+
+  // Dispara la solicitud de permisos
+  const aceptarPermiso = async () => {
+    setPermisoModalVisible(false);
+    if (Platform.OS !== "android") return;
+
+    // Pedir RECEIVE_SMS
+    const res = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.RECEIVE_SMS
+    );
+
+    if (res !== PermissionsAndroid.RESULTS.GRANTED) {
+      Alert.alert(
+        "Permiso de SMS denegado",
+        "Puedes activarlo en Ajustes > Apps > AntiFraude SMS."
+      );
+      return;
+    }
+
+    // Pedir permiso especial de Listener si no está autorizado
+    const status = await RNAndroidNotificationListener.getPermissionStatus();
+    if (status !== "authorized") {
+      RNAndroidNotificationListener.requestPermission();
     } else {
-      //router.replace("/(tabs)/bandejaMensaje");
+      verificarEstadoPermiso();
     }
   };
 
-  // Función de Cancelación
   const rechazarPermiso = () => {
     setPermisoModalVisible(false);
     Alert.alert(
       "No concedido",
-      "Has rechazado el permiso. Puedes activarlo luego en la configuración.",
+      "Has rechazado el permiso. Puedes activarlo luego en la configuración."
     );
   };
 
@@ -189,7 +217,7 @@ export default function HomeScreen() {
 
           <ThemedText style={styles.description}>
             Analizamos tus mensajes para detectar fraudes (smishing).
-            Necesitamos tu numero de telefono y permiso para leer SMS y así
+            Necesitamos tu número de teléfono y permiso para leer SMS y así
             avisarte de riesgos. Es seguro y privado.
           </ThemedText>
 
@@ -209,7 +237,7 @@ export default function HomeScreen() {
             {telefonoAutenticado ? telefonoAutenticado : "No registrado"}
           </Text>
 
-          {/* BOTÓN 2: Conceder Permiso (Bloqueado hasta tener número autenticado con OTP) */}
+          {/* BOTÓN 2: Conceder Permisos (Bloqueado hasta autenticar OTP) */}
           <TouchableOpacity
             style={[
               styles.botonAbrir,
@@ -565,7 +593,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  // Estilos agregados para la simulación OTP y errores
   cajaSimulada: {
     backgroundColor: "#FFF8E1",
     borderWidth: 1,
