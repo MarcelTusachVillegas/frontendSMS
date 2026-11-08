@@ -46,7 +46,6 @@
       "expo-status-bar",
       "expo-web-browser",
       "./withNotificationService.js",
-      "./withSmsReceiver.js",
       "expo-secure-store"
     ],
     "experiments": {

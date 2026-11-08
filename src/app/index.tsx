@@ -9,11 +9,9 @@ import { solicitarOtp, verificarOtp } from "@/lib/api";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   AppState,
   type AppStateStatus,
   Modal,
-  PermissionsAndroid,
   Platform,
   Pressable,
   ScrollView,
@@ -119,20 +117,9 @@ export default function HomeScreen() {
   // Verificar estado de permisos y redirigir si todo está autorizado
   const verificarEstadoPermiso = useCallback(async () => {
     if (Platform.OS !== "android") return;
-
     try {
-      // 1. Permiso nativo RECEIVE_SMS
-      const hasSmsPermission = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.RECEIVE_SMS
-      );
-
-      // 2. Permiso especial de escucha de notificaciones
       const status = await RNAndroidNotificationListener.getPermissionStatus();
-      const hasNotificationListener = status === "authorized";
-
-      if (hasSmsPermission && hasNotificationListener) {
-        console.log("Todos los permisos están concedidos. Redirigiendo...");
-        // Redirige a la vista principal de la app
+      if (status === "authorized") {
         router.replace("/(tabs)/bandejaMensaje");
       }
     } catch (error) {
@@ -166,20 +153,6 @@ export default function HomeScreen() {
     setPermisoModalVisible(false);
     if (Platform.OS !== "android") return;
 
-    // Pedir RECEIVE_SMS
-    const res = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.RECEIVE_SMS
-    );
-
-    if (res !== PermissionsAndroid.RESULTS.GRANTED) {
-      Alert.alert(
-        "Permiso de SMS denegado",
-        "Puedes activarlo en Ajustes > Apps > AntiFraude SMS."
-      );
-      return;
-    }
-
-    // Pedir permiso especial de Listener si no está autorizado
     const status = await RNAndroidNotificationListener.getPermissionStatus();
     if (status !== "authorized") {
       RNAndroidNotificationListener.requestPermission();
@@ -190,10 +163,6 @@ export default function HomeScreen() {
 
   const rechazarPermiso = () => {
     setPermisoModalVisible(false);
-    Alert.alert(
-      "No concedido",
-      "Has rechazado el permiso. Puedes activarlo luego en la configuración."
-    );
   };
 
   // --- FIN LÓGICA NOTIFICACIONES ---
@@ -217,8 +186,7 @@ export default function HomeScreen() {
 
           <ThemedText style={styles.description}>
             Analizamos tus mensajes para detectar fraudes (smishing).
-            Necesitamos tu número de teléfono y permiso para leer SMS y así
-            avisarte de riesgos. Es seguro y privado.
+            Necesitamos tu número de teléfono y permiso para leer las notificaciones de tus apps de mensajería para avisarte de riesgos. Es seguro y privado.
           </ThemedText>
 
           {/* BOTÓN 1: Ingresar Número */}
@@ -256,7 +224,7 @@ export default function HomeScreen() {
                 { color: telefonoAutenticado === null ? "#666666" : "#fff" },
               ]}
             >
-              CONCEDER PERMISO DE SMS
+              CONCEDER ACCESO A NOTIFICACIONES
             </Text>
           </TouchableOpacity>
 
@@ -404,7 +372,7 @@ export default function HomeScreen() {
             </View>
           </Modal>
 
-          {/* MODAL 3: SOLICITUD DE PERMISOS SMS */}
+          {/* MODAL 3: SOLICITUD DE PERMISOS DE NOTIFICACIONES */}
           <Modal
             animationType="fade"
             transparent={true}
@@ -417,7 +385,7 @@ export default function HomeScreen() {
                   <Text style={{ fontSize: 40 }}>🛡️💬</Text>
                 </View>
                 <Text style={[styles.tituloAlert, { textAlign: "center" }]}>
-                  Permiso de SMS
+                  Acceso a notificaciones
                 </Text>
                 <Text
                   style={[
@@ -425,11 +393,9 @@ export default function HomeScreen() {
                     { textAlign: "center", fontSize: 15 },
                   ]}
                 >
-                  Para protegerte de las estafas, necesitamos revisar tus
-                  mensajes entrantes. Solo analizaremos los enlaces peligrosos
-                  para cuidarte.
+                  Para protegerte de las estafas, necesitamos leer el contenido de las notificaciones de tus mensajes entrantes. Solo analizaremos los enlaces peligrosos para cuidarte.
                   {"\n\n"}
-                  ¿Autorizas el análisis de tus mensajes?
+                  ¿Autorizas el acceso a tus notificaciones?
                 </Text>
 
                 <View style={styles.botonesContainer}>

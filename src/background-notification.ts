@@ -3,7 +3,7 @@ import { getTokenPersistido } from "@/lib/token-store";
 import { AppRegistry } from "react-native";
 
 // ============================================================================
-// VÍA B: Tarea Headless para Notificaciones (react-native-android-notification-listener)
+// Tarea Headless para Notificaciones (react-native-android-notification-listener)
 // ============================================================================
 const headlessNotificationListener = async ({ notification }: any) => {
   if (!notification) return;
@@ -32,44 +32,9 @@ const headlessNotificationListener = async ({ notification }: any) => {
 };
 
 // ============================================================================
-// VÍA A: Tarea Headless para BroadcastReceiver de SMS Nativo
-// ============================================================================
-type SmsTaskData = {
-  sender?: string;
-  message?: string;
-};
-
-const smsAnalyzerTask = async (taskData: SmsTaskData) => {
-  const { sender, message } = taskData;
-  if (!message) return;
-
-  console.log(`\n[VÍA A - SMS NATIVO RECIBIDO]`);
-  console.log(`De: ${sender}`);
-  console.log(`Texto: ${message}\n`);
-
-  const token = await getTokenPersistido();
-  if (!token) {
-    console.log("[VÍA A] Sin token guardado. Omitiendo envío al backend.");
-    return;
-  }
-
-  try {
-    const res = await analizarMensaje(message, token);
-    console.log("[VÍA A] Resultado del análisis backend:", res);
-  } catch (error) {
-    console.error("[VÍA A] Backend no disponible o falló la petición:", error);
-  }
-};
-
-// ============================================================================
 // Registro de Tareas Headless en AppRegistry
 // ============================================================================
 AppRegistry.registerHeadlessTask(
   "RNAndroidNotificationListenerHeadlessJs",
   () => headlessNotificationListener
-);
-
-AppRegistry.registerHeadlessTask(
-  "SMSAnalyzerTask",
-  () => smsAnalyzerTask
 );

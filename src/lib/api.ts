@@ -1,22 +1,24 @@
 import Constants from "expo-constants";
-import { Platform } from "react-native";
 
 /**
  * URL base del backend.
- * - Emulador Android usa 10.0.2.2 para llegar al localhost del PC.
- * - Dispositivo físico: toma la IP LAN automáticamente desde Expo hostUri.
+ * - Si Metro está corriendo (Expo Go / dev client), usa la IP local.
+ * - En builds de producción o standalone, usa el backend en Render.
  */
 function resolverHost(): string {
+  const URL_PRODUCCION = "https://sms-security-backend.onrender.com";
+
   const debuggerHost =
     Constants.expoConfig?.hostUri ??
-    // // @ts-expect-error campo presente en dev builds antiguos
     Constants.manifest2?.extra?.expoGo?.debuggerHost;
   const ip =
     typeof debuggerHost === "string" ? debuggerHost.split(":")[0] : null;
 
+  // Si Metro está corriendo (Expo Go / dev client en la misma red), usa la IP local — para desarrollo rápido.
   if (ip) return `http://${ip}:3000`;
-  if (Platform.OS === "android") return "http://10.0.2.2:3000";
-  return "http://localhost:3000";
+
+  // Sin servidor de desarrollo detrás (build standalone o producción): usa el backend real en Render.
+  return URL_PRODUCCION;
 }
 
 export const API_BASE_URL = resolverHost();
