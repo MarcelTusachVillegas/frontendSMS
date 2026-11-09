@@ -4,8 +4,12 @@ import { Text } from "react-native";
 import { useAuth } from "@/context/auth-context";
 
 export default function TabsLayout() {
-  const { autenticado } = useAuth();
+  const { autenticado, authReady } = useAuth();
 
+  // Espera a que SecureStore termine de restaurar la sesión.
+  if (!authReady) {
+    return null;
+  }
   // Guard de navegación: redirige al inicio si no se ha completado la verificación OTP
   if (!autenticado) {
     return <Redirect href="/" />;

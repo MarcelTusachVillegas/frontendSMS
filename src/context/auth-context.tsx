@@ -9,10 +9,11 @@ import {
 } from "react";
 
 import type { Usuario } from "@/lib/api";
+
 import {
-  getTokenPersistido,
+  getSesionPersistida,
   removeTokenPersistido,
-  setTokenPersistido,
+  setSesionPersistida,
 } from "@/lib/token-store";
 
 type AuthContextValue = {
@@ -23,6 +24,8 @@ type AuthContextValue = {
   usuario: Usuario | null;
   /** true cuando ya se completó la verificación OTP. */
   autenticado: boolean;
+  /** true cuando terminó la lectura inicial del almacenamiento seguro. */
+  authReady: boolean;
   /** Guarda la sesión tras un OTP válido. */
   iniciarSesion: (datos: {
     telefono: string;
@@ -39,14 +42,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [telefono, setTelefono] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   // Intentar hidratar el token persistido al montar el proveedor
   useEffect(() => {
-    getTokenPersistido().then((storedToken) => {
-      if (storedToken) {
-        setToken(storedToken);
-      }
-    });
+    getSesionPersistida()
+      .then((session) => {
+        if (session) {
+          setTelefono(session.telefono);
+          setToken(session.token);
+          setUsuario(session.usuario);
+        }
+      })
+      .catch((error) => {
+        console.warn("No se pudo restaurar la sesión guardada:", error);
+      })
+      .finally(() => setAuthReady(true));
   }, []);
 
   const iniciarSesion = useCallback<AuthContextValue["iniciarSesion"]>(
@@ -55,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(datos.token);
       setUsuario(datos.usuario);
       // Persistir el token de forma asíncrona
-      await setTokenPersistido(datos.token);
+      await setSesionPersistida(datos);
     },
     [],
   );
@@ -74,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       usuario,
       autenticado: telefono !== null && token !== null,
+      authReady,
       iniciarSesion,
       cerrarSesion,
     }),
