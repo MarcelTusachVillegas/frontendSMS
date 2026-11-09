@@ -7,7 +7,6 @@ import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { solicitarOtp, verificarOtp } from "@/lib/api";
 import { useRouter } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useState } from "react";
 import {
   AppState,
@@ -25,10 +24,9 @@ import {
 import RNAndroidNotificationListener from "react-native-android-notification-listener";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-void SplashScreen.preventAutoHideAsync();
 export default function HomeScreen() {
   const router = useRouter();
-  const { telefono: telefonoAutenticado, autenticado, authReady,iniciarSesion } = useAuth();
+  const { telefono: telefonoAutenticado, iniciarSesion } = useAuth();
 
   // Estados para los Modales y Datos
   const [modalVisible, setModalVisible] = useState(false);
@@ -118,7 +116,7 @@ export default function HomeScreen() {
 
   // Verificar estado de permisos y redirigir si todo está autorizado
   const verificarEstadoPermiso = useCallback(async () => {
-    if (!authReady || !autenticado || Platform.OS !== "android") return;
+    if (Platform.OS !== "android") return;
     try {
       const status = await RNAndroidNotificationListener.getPermissionStatus();
       if (status === "authorized") {
@@ -127,7 +125,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.warn("Error al verificar estado de permisos:", error);
     }
-  }, [router, authReady, autenticado]);
+  }, [router]);
 
   // Verificar al montar la pantalla
   useEffect(() => {

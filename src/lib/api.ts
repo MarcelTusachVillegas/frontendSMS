@@ -163,10 +163,6 @@ export type RespuestaAnalisis = Reporte & {
   guardado: boolean;
 };
 
-export function crearReportePrueba(body: unknown, token?: string | null) {
-  return post<RespuestaAnalisis>("/reportes", body, token);
-}
-
 /**
  * Analiza un mensaje SIN reportarlo (guardar:false). Con token, el backend lo
  * registra en el historial del usuario (la bandeja de entrada de la app).
