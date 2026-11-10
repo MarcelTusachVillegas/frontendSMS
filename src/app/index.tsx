@@ -6,7 +6,7 @@ import { WebBadge } from "@/components/web-badge";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { solicitarOtp, verificarOtp } from "@/lib/api";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   AppState,
@@ -26,7 +26,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { telefono: telefonoAutenticado, iniciarSesion } = useAuth();
+  const { telefono: telefonoAutenticado, iniciarSesion, authReady } = useAuth();
 
   // Estados para los Modales y Datos
   const [modalVisible, setModalVisible] = useState(false);
@@ -119,13 +119,13 @@ export default function HomeScreen() {
     if (Platform.OS !== "android") return;
     try {
       const status = await RNAndroidNotificationListener.getPermissionStatus();
-      if (status === "authorized") {
+      if (status === "authorized" && telefonoAutenticado) {
         router.replace("/(tabs)/bandejaMensaje");
       }
     } catch (error) {
       console.warn("Error al verificar estado de permisos:", error);
     }
-  }, [router]);
+  }, [router, telefonoAutenticado]);
 
   // Verificar al montar la pantalla
   useEffect(() => {
@@ -166,6 +166,9 @@ export default function HomeScreen() {
   };
 
   // --- FIN LÓGICA NOTIFICACIONES ---
+  if (!authReady) {
+    return <Redirect href="/cargando" />;
+  }
 
   return (
     <ThemedView style={styles.container}>

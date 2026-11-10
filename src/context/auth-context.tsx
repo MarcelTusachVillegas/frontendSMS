@@ -46,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Intentar hidratar el token persistido al montar el proveedor
   useEffect(() => {
+    // Temporizador de respaldo por si SecureStore tarda demasiado o falla silenciosamente
+    const timeout = setTimeout(() => {
+      setAuthReady(true);
+    }, 5000);
+
     getSesionPersistida()
       .then((session) => {
         if (session) {
@@ -57,7 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch((error) => {
         console.warn("No se pudo restaurar la sesión guardada:", error);
       })
-      .finally(() => setAuthReady(true));
+      .finally(() => {
+        clearTimeout(timeout);
+        setAuthReady(true);
+      });
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const iniciarSesion = useCallback<AuthContextValue["iniciarSesion"]>(
@@ -89,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       iniciarSesion,
       cerrarSesion,
     }),
-    [telefono, token, usuario, iniciarSesion, cerrarSesion],
+    [telefono, token, usuario, authReady, iniciarSesion, cerrarSesion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

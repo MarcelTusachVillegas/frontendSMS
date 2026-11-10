@@ -2,6 +2,9 @@ import { Stack } from "expo-router";
 
 import { AuthProvider } from "@/context/auth-context";
 import "../background-notification";
+export const unstable_settings = {
+  initialRouteName: "cargando",
+};
 export default function RootLayout() {
   return (
     <AuthProvider>
