@@ -39,12 +39,6 @@ export default function TabsLayout() {
           tabBarIcon: () => <Text style={{ fontSize: 22 }}>👤</Text>,
         }}
       />
-      <Tabs.Screen
-        name="detallemensaje"
-        options={{
-          href: null,
-        }}
-      />
       {/* Pantallas internas accesibles por código, pero ocultas de la barra inferior */}
     </Tabs>
   );

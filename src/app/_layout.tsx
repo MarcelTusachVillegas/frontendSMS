@@ -9,6 +9,7 @@ export default function RootLayout() {
         <Stack.Screen name="cargando" />
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="detallemensaje" />
       </Stack>
     </AuthProvider>
   );
