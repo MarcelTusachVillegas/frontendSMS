@@ -53,3 +53,13 @@ export async function getSesionPersistida(): Promise<PersistedSession | null> {
 
   return null;
 }
+
+/**
+ * Elimina tanto la sesión como el token JWT del almacenamiento seguro.
+ */
+export async function removeSesionPersistida(): Promise<void> {
+  await Promise.all([
+    SecureStore.deleteItemAsync(SESSION_KEY),
+    SecureStore.deleteItemAsync(TOKEN_KEY),
+  ]);
+}

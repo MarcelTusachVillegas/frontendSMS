@@ -12,8 +12,8 @@ import type { Usuario } from "@/lib/api";
 
 import {
   getSesionPersistida,
-  removeTokenPersistido,
-  setSesionPersistida,
+  removeSesionPersistida,
+  setSesionPersistida
 } from "@/lib/token-store";
 
 type AuthContextValue = {
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUsuario(null);
     // Eliminar el token del SecureStore
-    await removeTokenPersistido();
+    await removeSesionPersistida();
   }, []);
 
   const value = useMemo<AuthContextValue>(
