@@ -12,7 +12,7 @@ import type { Usuario } from "@/lib/api";
 
 import {
   getSesionPersistida,
-  removeTokenPersistido,
+  removeSesionPersistida,
   setSesionPersistida,
 } from "@/lib/token-store";
 
@@ -31,9 +31,9 @@ type AuthContextValue = {
     telefono: string;
     token: string;
     usuario: Usuario;
-  }) => void;
-  /** Cierra la sesión local (Cerrar Sesión del perfil). */
-  cerrarSesion: () => void;
+  }) => Promise<void>;
+  /** Cierra la sesión local (Cerrar Sesión del perfil). modificado recien revisar en caso de fallo */
+  cerrarSesion: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUsuario(null);
     // Eliminar el token del SecureStore
-    await removeTokenPersistido();
+    await removeSesionPersistida();
   }, []);
 
   const value = useMemo<AuthContextValue>(

@@ -28,8 +28,8 @@ export default function PerfilScreen() {
     // router.push("/chatAsistente");
   };
 
-  const handleCerrarSesion = () => {
-    cerrarSesion();
+  const handleCerrarSesion = async () => {
+    await cerrarSesion(); // se modifico recien
     router.replace("/");
   };
 

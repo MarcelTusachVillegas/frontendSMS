@@ -25,11 +25,11 @@ export async function getTokenPersistido(): Promise<string | null> {
 }
 
 /**
- * Elimina el token JWT del almacenamiento seguro.
- */
+ * Elimina el token JWT del almacenamiento seguro. 
+  se borra de forma segura para mejorar cerrado token y sesion, sin embargo se deja por control de fallos nuevos
 export async function removeTokenPersistido(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
-}
+}*/
 
 export async function setSesionPersistida(
   session: PersistedSession,
@@ -52,4 +52,10 @@ export async function getSesionPersistida(): Promise<PersistedSession | null> {
   }
 
   return null;
+}
+
+//para eliminar toda la sesion persistente el token mas los datos de sesion
+export async function removeSesionPersistida(): Promise<void> {
+  await SecureStore.deleteItemAsync(SESSION_KEY);
+  await SecureStore.deleteItemAsync(TOKEN_KEY);
 }

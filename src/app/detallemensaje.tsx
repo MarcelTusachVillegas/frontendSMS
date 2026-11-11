@@ -36,14 +36,19 @@ function construirMotivos(item: HistorialItem | null): string[] {
   if (item.categoria && item.categoria !== "sin_clasificar") {
     motivos.push("Coincide con un patrón de estafa conocido");
   }
-  if (item.empresa_mencionada && item.empresa_mencionada !== "sin_identificar") {
+  if (
+    item.empresa_mencionada &&
+    item.empresa_mencionada !== "sin_identificar"
+  ) {
     motivos.push(`Dice ser de ${item.empresa_mencionada}`);
   }
   if (item.url) {
     motivos.push("Contiene un enlace (no lo abras)");
   }
   if (motivos.length === 0) {
-    motivos.push("El mensaje fue analizado y no presenta señales claras de fraude");
+    motivos.push(
+      "El mensaje fue analizado y no presenta señales claras de fraude",
+    );
   }
   return motivos;
 }
@@ -72,7 +77,8 @@ export default function DetalleMensajeScreen() {
     try {
       const lista = await obtenerHistorial(token);
       const encontrado = lista.find((h) => h._id === id);
-      if (!encontrado) throw new Error("No se encontró el mensaje en tu historial");
+      if (!encontrado)
+        throw new Error("No se encontró el mensaje en tu historial");
       setItem(encontrado);
       setYaReportado(encontrado.fue_reportado);
     } catch (e) {
@@ -91,21 +97,28 @@ export default function DetalleMensajeScreen() {
   const alarmaActiva = nivel === "alto";
 
   const remitente =
-    item && item.empresa_mencionada && item.empresa_mencionada !== "sin_identificar"
+    item &&
+    item.empresa_mencionada &&
+    item.empresa_mencionada !== "sin_identificar"
       ? item.empresa_mencionada
       : "Número desconocido";
 
   const handleReportar = async () => {
     if (!item || reportando || yaReportado) return;
     if (!token) {
-      Alert.alert("Sesión requerida", "Inicia sesión para reportar este mensaje.");
+      Alert.alert(
+        "Sesión requerida",
+        "Inicia sesión para reportar este mensaje.",
+      );
       return;
     }
     setReportando(true);
     try {
       // Regla: un usuario no puede reportar dos veces el mismo mensaje.
       const lista = await obtenerHistorial(token);
-      const yaExiste = lista.some((h) => h.mensaje === item.mensaje && h.fue_reportado);
+      const yaExiste = lista.some(
+        (h) => h.mensaje === item.mensaje && h.fue_reportado,
+      );
       if (yaExiste) {
         setYaReportado(true);
         Alert.alert("Ya reportado", "Ya habías reportado este mensaje.");
@@ -115,25 +128,49 @@ export default function DetalleMensajeScreen() {
       // Se reenvía el mismo texto exacto, con el token del usuario.
       await reportarMensaje({ mensaje: item.mensaje, guardar: true }, token);
       setYaReportado(true);
-      Alert.alert("Reporte enviado", "Gracias. Tu reporte fue registrado y será analizado.");
+      Alert.alert(
+        "Reporte enviado",
+        "Gracias. Tu reporte fue registrado y será analizado.",
+      );
     } catch (e) {
-      Alert.alert("No se pudo reportar", e instanceof Error ? e.message : "Intenta nuevamente.");
+      Alert.alert(
+        "No se pudo reportar",
+        e instanceof Error ? e.message : "Intenta nuevamente.",
+      );
     } finally {
       setReportando(false);
     }
   };
 
   const handleAsistencia = () => {
-    router.push("/chatAsistente");
+    if (!item) return;
+
+    router.push({
+      pathname: "/chatAsistente",
+      params: {
+        textoSospechoso: item.mensaje,
+        remitente: remitente,
+        nivelRiesgo: nivel,
+        score: item.score_riesgo,
+      },
+    });
   };
 
   return (
     <View style={styles.screenContainer}>
       {/* Header Superior */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable style={styles.backButton} onPress={volver} accessibilityLabel="Volver">
+        <Pressable
+          style={styles.backButton}
+          onPress={volver}
+          accessibilityLabel="Volver"
+        >
           <SymbolView
-            name={{ ios: "chevron.left", android: "arrow_back", web: "arrow_back" }}
+            name={{
+              ios: "chevron.left",
+              android: "arrow_back",
+              web: "arrow_back",
+            }}
             tintColor="#FFFFFF"
             size={22}
           />
@@ -145,7 +182,9 @@ export default function DetalleMensajeScreen() {
 
       {!id ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No se recibió el identificador del mensaje.</Text>
+          <Text style={styles.emptyText}>
+            No se recibió el identificador del mensaje.
+          </Text>
           <Pressable style={styles.secondaryButton} onPress={volver}>
             <Text style={styles.secondaryButtonText}>VOLVER A LA BANDEJA</Text>
           </Pressable>
@@ -165,13 +204,18 @@ export default function DetalleMensajeScreen() {
       ) : (
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 24 }]}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingBottom: insets.bottom + 24 },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {/* Card del Mensaje */}
           <View style={styles.messageCard}>
             <Text style={styles.messageTitle}>{remitente}</Text>
-            <Text style={styles.messageBody}>{item?.mensaje ?? "(Mensaje vacío)"}</Text>
+            <Text style={styles.messageBody}>
+              {item?.mensaje ?? "(Mensaje vacío)"}
+            </Text>
           </View>
 
           {/* Score de Riesgo */}
@@ -190,7 +234,9 @@ export default function DetalleMensajeScreen() {
           {/* Por qué es peligroso */}
           <View style={styles.reasonsSection}>
             <Text style={styles.sectionTitle}>
-              {alarmaActiva ? "Por qué es peligroso:" : "Resultado del análisis:"}
+              {alarmaActiva
+                ? "Por qué es peligroso:"
+                : "Resultado del análisis:"}
             </Text>
             <View style={styles.bulletList}>
               {construirMotivos(item).map((motivo, i) => (
@@ -204,9 +250,13 @@ export default function DetalleMensajeScreen() {
           {/* Recomendación */}
           {alarmaActiva ? (
             <View style={styles.recommendationSection}>
-              <Text style={styles.recommendationLabel}>RECOMENDACIÓN CLARA</Text>
+              <Text style={styles.recommendationLabel}>
+                RECOMENDACIÓN CLARA
+              </Text>
               <View style={styles.warningBanner}>
-                <Text style={styles.warningText}>No hagas clic.{"\n"}No entregues datos.</Text>
+                <Text style={styles.warningText}>
+                  No hagas clic.{"\n"}No entregues datos.
+                </Text>
               </View>
             </View>
           ) : (
@@ -222,7 +272,10 @@ export default function DetalleMensajeScreen() {
             {alarmaActiva ? (
               <>
                 <Pressable
-                  style={[styles.primaryButton, (reportando || yaReportado) && styles.buttonDisabled]}
+                  style={[
+                    styles.primaryButton,
+                    (reportando || yaReportado) && styles.buttonDisabled,
+                  ]}
                   onPress={handleReportar}
                   disabled={reportando || yaReportado}
                   accessibilityRole="button"
@@ -243,13 +296,30 @@ export default function DetalleMensajeScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Pedir asistencia al chat educativo"
                 >
-                  <Text style={styles.secondaryButtonText}>PEDIR ASISTENCIA AL CHAT EDUCATIVO</Text>
+                  <Text style={styles.secondaryButtonText}>
+                    PEDIR ASISTENCIA AL CHAT EDUCATIVO
+                  </Text>
                 </Pressable>
               </>
             ) : (
               <Pressable style={styles.primaryButton} onPress={volver}>
                 <Text style={styles.primaryButtonText}>ENTENDIDO</Text>
               </Pressable>
+              /* esto era pa domi de pruebas nada mas
+              <View style={{ gap: 12 }}>
+                <Pressable style={styles.primaryButton} onPress={volver}>
+                  <Text style={styles.primaryButtonText}>ENTENDIDO</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.primaryButton, { backgroundColor: "#1e293b" }]}
+                  onPress={handleAsistencia}
+                >
+                  <Text style={styles.primaryButtonText}>
+                    🤖 Consultar a la IA
+                  </Text>
+                </Pressable>
+              </View>*/
             )}
           </View>
         </ScrollView>
@@ -269,11 +339,22 @@ const styles = StyleSheet.create({
   },
   backButton: { marginRight: 16, padding: 4 },
   headerTitle: { color: "#FFFFFF", fontSize: 20, fontWeight: "700", flex: 1 },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 16 },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    gap: 16,
+  },
   emptyText: { fontSize: 15, color: "#374151", textAlign: "center" },
   scrollView: { flex: 1 },
   contentContainer: { paddingHorizontal: 20, paddingTop: 20, gap: 20 },
-  messageCard: { backgroundColor: "#E3E9E5", borderRadius: 16, padding: 16, gap: 6 },
+  messageCard: {
+    backgroundColor: "#E3E9E5",
+    borderRadius: 16,
+    padding: 16,
+    gap: 6,
+  },
   messageTitle: { fontSize: 16, fontWeight: "700", color: "#1F2937" },
   messageBody: { fontSize: 15, color: "#374151", lineHeight: 22 },
   riskSection: { gap: 4 },
@@ -284,9 +365,19 @@ const styles = StyleSheet.create({
   reasonsSection: { gap: 6 },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#1F2937" },
   bulletList: { paddingLeft: 4, gap: 4 },
-  bulletItem: { fontSize: 15, color: "#374151", fontWeight: "500", lineHeight: 21 },
+  bulletItem: {
+    fontSize: 15,
+    color: "#374151",
+    fontWeight: "500",
+    lineHeight: 21,
+  },
   recommendationSection: { gap: 8, marginTop: 4 },
-  recommendationLabel: { fontSize: 13, fontWeight: "800", color: "#1F2937", letterSpacing: 0.5 },
+  recommendationLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1F2937",
+    letterSpacing: 0.5,
+  },
   warningBanner: {
     backgroundColor: "#F5B800",
     borderRadius: 16,
@@ -295,9 +386,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  warningText: { fontSize: 22, fontWeight: "900", color: "#111827", textAlign: "center", lineHeight: 28 },
-  safeBanner: { backgroundColor: "#E8F5E9", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#A5D6A7" },
-  safeText: { fontSize: 15, color: "#1B5E20", textAlign: "center", fontWeight: "600" },
+  warningText: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#111827",
+    textAlign: "center",
+    lineHeight: 28,
+  },
+  safeBanner: {
+    backgroundColor: "#E8F5E9",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#A5D6A7",
+  },
+  safeText: {
+    fontSize: 15,
+    color: "#1B5E20",
+    textAlign: "center",
+    fontWeight: "600",
+  },
   actionButtonsContainer: { gap: 12, marginTop: 8 },
   primaryButton: {
     backgroundColor: "#082A24",
@@ -307,7 +415,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 50,
   },
-  primaryButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800", letterSpacing: 0.5 },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
   buttonDisabled: { opacity: 0.6 },
   secondaryButton: {
     backgroundColor: "#E3E9E5",
@@ -320,5 +433,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 50,
   },
-  secondaryButtonText: { color: "#1F2937", fontSize: 14, fontWeight: "800", letterSpacing: 0.5, textAlign: "center" },
+  secondaryButtonText: {
+    color: "#1F2937",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textAlign: "center",
+  },
 });
