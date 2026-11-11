@@ -216,7 +216,7 @@ export default function HomeScreen() {
               styles.botonAbrir,
               {
                 backgroundColor:
-                  telefonoAutenticado === null ? "#cccccc" : "#1e88e5",
+                  telefonoAutenticado === null ? "#cccccc" : "#2d6448",
                 opacity: telefonoAutenticado === null ? 0.7 : 1,
               },
             ]}
@@ -417,7 +417,7 @@ export default function HomeScreen() {
                     style={[
                       styles.botonAlert,
                       styles.botonGuardar,
-                      { backgroundColor: "#1e88e5" },
+                      { backgroundColor: "#2d6448" },
                     ]}
                     onPress={aceptarPermiso}
                   >
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   botonAbrir: {
-    backgroundColor: "#0d47a1",
+    backgroundColor: "#2d6448",
     padding: 15,
     borderRadius: 8,
     width: "80%",
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   botonGuardar: {
-    backgroundColor: "#0d47a1",
+    backgroundColor: "#2d6448",
   },
   textoCancelar: {
     color: "#666",

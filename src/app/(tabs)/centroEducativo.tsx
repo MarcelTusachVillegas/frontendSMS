@@ -1,13 +1,13 @@
 import { useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function CentroEducativoScreen() {
   const router = useRouter();
 
@@ -24,7 +24,15 @@ export default function CentroEducativoScreen() {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Text style={styles.backIcon}>⬅️</Text>
+          <SymbolView
+            name={{
+              ios: "chevron.left",
+              android: "arrow_back",
+              web: "arrow_back",
+            }}
+            tintColor="#438163"
+            size={22}
+          />
           <Text style={styles.backText}>Volver</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Centro Educativo</Text>
@@ -117,13 +125,13 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 16,
-    color: "#0d47a1",
+    color: "#438163",
     fontWeight: "bold",
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#222",
+    color: "#438163",
   },
   scrollContent: {
     paddingBottom: 30,

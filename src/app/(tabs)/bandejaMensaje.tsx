@@ -12,7 +12,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/auth-context";
-import { nivelDeHistorial, obtenerHistorial, type HistorialItem } from "@/lib/api";
+import {
+  nivelDeHistorial,
+  obtenerHistorial,
+  type HistorialItem,
+} from "@/lib/api";
 
 export interface MensajeSMS {
   id: string;
@@ -27,15 +31,27 @@ function formatearTiempo(iso: string): string {
   const fecha = new Date(iso);
   const hoy = new Date();
   if (fecha.toDateString() === hoy.toDateString()) {
-    return fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+    return fecha.toLocaleTimeString("es-CL", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
-  return fecha.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" });
+  return fecha.toLocaleDateString("es-CL", {
+    day: "2-digit",
+    month: "2-digit",
+  });
 }
 
 function aMensajeSMS(h: HistorialItem): MensajeSMS {
   const nivel = nivelDeHistorial(h);
-  const riesgo = nivel === "alto" ? "fraude" : nivel === "medio" ? "sospechoso" : "seguro";
-  const estado = riesgo === "fraude" ? "FRAUDE" : riesgo === "sospechoso" ? "Sospechoso" : "Seguro";
+  const riesgo =
+    nivel === "alto" ? "fraude" : nivel === "medio" ? "sospechoso" : "seguro";
+  const estado =
+    riesgo === "fraude"
+      ? "FRAUDE"
+      : riesgo === "sospechoso"
+        ? "Sospechoso"
+        : "Seguro";
   const remitente =
     h.empresa_mencionada && h.empresa_mencionada !== "sin_identificar"
       ? h.empresa_mencionada
@@ -69,7 +85,9 @@ export default function BandejaMensaje() {
         const historial = await obtenerHistorial(token);
         setMensajes(historial.map(aMensajeSMS));
       } catch (e) {
-        setError(e instanceof Error ? e.message : "No se pudo cargar tus mensajes");
+        setError(
+          e instanceof Error ? e.message : "No se pudo cargar tus mensajes",
+        );
       } finally {
         setCargando(false);
         setRefrescando(false);
@@ -101,7 +119,7 @@ export default function BandejaMensaje() {
       {/* Cabecera con Botones Activos */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-          <Text style={{ color: "#0d47a1", fontWeight: "bold" }}>
+          <Text style={{ color: "#136041", fontWeight: "bold" }}>
             AntiFraude
           </Text>{" "}
           SMS
@@ -148,7 +166,10 @@ export default function BandejaMensaje() {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refrescando} onRefresh={() => cargar(true)} />
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={() => cargar(true)}
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -167,7 +188,10 @@ export default function BandejaMensaje() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => {
-              router.push({ pathname: "/detallemensaje", params: { id: msg.id } });
+              router.push({
+                pathname: "/detallemensaje",
+                params: { id: msg.id },
+              });
             }}
             style={[styles.card, styles[`card_${msg.riesgo}`]]}
           >
@@ -235,7 +259,7 @@ const styles = StyleSheet.create({
   assistantButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0d47a1", // Azul oscuro de alto contraste
+    backgroundColor: "#0c4f2b",
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,

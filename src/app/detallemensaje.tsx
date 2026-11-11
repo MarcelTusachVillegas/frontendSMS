@@ -302,24 +302,20 @@ export default function DetalleMensajeScreen() {
                 </Pressable>
               </>
             ) : (
-              <Pressable style={styles.primaryButton} onPress={volver}>
-                <Text style={styles.primaryButtonText}>ENTENDIDO</Text>
-              </Pressable>
-              /* esto era pa domi de pruebas nada mas
               <View style={{ gap: 12 }}>
                 <Pressable style={styles.primaryButton} onPress={volver}>
                   <Text style={styles.primaryButtonText}>ENTENDIDO</Text>
                 </Pressable>
 
                 <Pressable
-                  style={[styles.primaryButton, { backgroundColor: "#1e293b" }]}
+                  style={[styles.primaryButton, { backgroundColor: "#5d7760" }]}
                   onPress={handleAsistencia}
                 >
                   <Text style={styles.primaryButtonText}>
-                    🤖 Consultar a la IA
+                    CONSULTAR A LA IA
                   </Text>
                 </Pressable>
-              </View>*/
+              </View>
             )}
           </View>
         </ScrollView>

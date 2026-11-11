@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/auth-context";
-
+import { SymbolView } from "expo-symbols";
 export default function PerfilScreen() {
   const router = useRouter();
   const { telefono, cerrarSesion } = useAuth();
@@ -25,7 +25,7 @@ export default function PerfilScreen() {
 
   const handleAssistantPress = () => {
     // Redirige a la vista del chat con el asistente educativo IA
-    // router.push("/chatAsistente");
+    router.push("/chatAsistente");
   };
 
   const handleCerrarSesion = async () => {
@@ -42,7 +42,15 @@ export default function PerfilScreen() {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Text style={styles.backIcon}>⬅️</Text>
+          <SymbolView
+            name={{
+              ios: "chevron.left",
+              android: "arrow_back",
+              web: "arrow_back",
+            }}
+            tintColor="#FFFFFF"
+            size={22}
+          />
           <Text style={styles.backText}>Volver</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
@@ -159,10 +167,11 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F6F8",
+    backgroundColor: "#082A24",
     paddingHorizontal: 16,
   },
   header: {
+    backgroundColor: "#082A24",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -179,13 +188,13 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 16,
-    color: "#0d47a1",
+    color: "#ffffff",
     fontWeight: "bold",
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ffffff",
   },
   profileCard: {
     backgroundColor: "#fff",
@@ -232,7 +241,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 12,
-    color: "#666",
+    color: "#ffffff",
     fontWeight: "bold",
     marginBottom: 10,
     marginLeft: 4,

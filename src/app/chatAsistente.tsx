@@ -17,7 +17,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { consultarAsistenteIA } from "@/lib/api";
-
+import { SymbolView } from "expo-symbols";
 interface MensajeChat {
   id: string;
   texto: string;
@@ -126,7 +126,15 @@ export default function ChatAsistente() {
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <Text style={{ fontSize: 24 }}>⬅️</Text>
+          <SymbolView
+            name={{
+              ios: "chevron.left",
+              android: "arrow_back",
+              web: "arrow_back",
+            }}
+            tintColor="#167021"
+            size={22}
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Asistente IA</Text>
         <View style={{ width: 40 }} />
@@ -204,21 +212,16 @@ export default function ChatAsistente() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     padding: 15,
-    backgroundColor: "#fff",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    backgroundColor: "#d4edd0",
   },
   backButton: { padding: 5 },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#0d47a1" },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#167021" },
   chatContainer: { padding: 15, paddingBottom: 30 },
   burbuja: {
     maxWidth: "80%",
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   burbujaUsuario: {
-    backgroundColor: "#0d47a1",
+    backgroundColor: "#4f8048",
     alignSelf: "flex-end",
     borderBottomRightRadius: 0,
   },
@@ -241,7 +244,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     marginBottom: 5,
-    backgroundColor: "#fff",
+    backgroundColor: "#d4edd0",
     alignItems: "center",
     borderTopWidth: 1,
     borderColor: "#ddd",
@@ -257,7 +260,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   sendButton: {
-    backgroundColor: "#0d47a1",
+    backgroundColor: "#167021",
     width: 48,
     height: 48,
     borderRadius: 24,
