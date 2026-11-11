@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -27,6 +27,19 @@ interface MensajeChat {
 export default function ChatAsistente() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // 2. Crea esta referencia para "recordar" si ya enviamos el mensaje
+  const mensajeAutomaticoEnviado = useRef(false);
+
+  // 1. Atrapamos los parámetros (si es que existen)
+  const { textoSospechoso, remitente, nivelRiesgo, score } =
+    useLocalSearchParams<{
+      textoSospechoso?: string;
+      remitente?: string;
+      nivelRiesgo?: string;
+      score?: string;
+    }>();
+
   const [mensajes, setMensajes] = useState<MensajeChat[]>([
     {
       id: "1",
@@ -38,23 +51,48 @@ export default function ChatAsistente() {
   const [inputTexto, setInputTexto] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  const enviarPreguntaIA = async () => {
-    if (!inputTexto.trim()) return;
+  // 2. Revisamos si venimos desde "Detalle Mensaje"
+  useEffect(() => {
+    if (textoSospechoso && !mensajeAutomaticoEnviado.current) {
+      mensajeAutomaticoEnviado.current = true; // Marcamos como enviado inmediatamente
+      // Si hay un texto sospechoso, autocompletamos la caja de texto para el usuario
+      //antiguo formato
+      //const promptPrecargado = `Analiza este mensaje sospechoso.\nRemitente: ${remitente || "Desconocido"}\nNivel de riesgo detectado: ${nivelRiesgo || "No clasificado"}\nPuntaje de riesgo: "${score || "N/A"}"\nMensaje: "${textoSospechoso}"\n\n¿Me explicas por qué tiene este riesgo y qué debo hacer?`;
+      //nuevo formato
+      const promptPrecargado = `Analiza este mensaje sospechoso.
+      Remitente: ${remitente || "Desconocido"}
+      Nivel de riesgo detectado: ${nivelRiesgo || "No clasificado"}
+      Puntaje de riesgo: ${score || "N/A"}
+      Mensaje: "${textoSospechoso}"
+      ¿Me explicas en detalle por qué el sistema le asignó este nivel y puntaje, y qué debo hacer?`;
+      enviarPreguntaIA(promptPrecargado);
+    }
+  }, [textoSospechoso, remitente, nivelRiesgo, score]);
 
-    const textoEnviado = inputTexto;
+  const enviarPreguntaIA = async (textoAutomatico?: string) => {
+    // Si recibe textoAutomático usa ese, de lo contrario usa lo que está en inputTexto
+    const textoAEnviar =
+      typeof textoAutomatico === "string" ? textoAutomatico : inputTexto.trim();
+
+    if (!textoAEnviar) return;
 
     const nuevoMensajeUsuario: MensajeChat = {
       id: Date.now().toString(),
-      texto: textoEnviado,
+      texto: textoAEnviar,
       remitente: "usuario",
     };
 
     setMensajes((prev) => [...prev, nuevoMensajeUsuario]);
-    setInputTexto("");
+
+    // Solo limpiamos la caja de texto si el usuario escribió manualmente
+    if (typeof textoAutomatico !== "string") {
+      setInputTexto("");
+    }
+
     setCargando(true);
 
     try {
-      const data = await consultarAsistenteIA(textoEnviado);
+      const data = await consultarAsistenteIA(textoAEnviar);
 
       if (data.respuesta) {
         const nuevoMensajeIA: MensajeChat = {
@@ -150,7 +188,7 @@ export default function ChatAsistente() {
           />
           <TouchableOpacity
             style={styles.sendButton}
-            onPress={enviarPreguntaIA}
+            onPress={() => enviarPreguntaIA()}
             disabled={cargando}
           >
             {cargando ? (

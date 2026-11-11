@@ -29,7 +29,7 @@ export default function PerfilScreen() {
   };
 
   const handleCerrarSesion = async () => {
-    await cerrarSesion();
+    await cerrarSesion(); // se modifico recien
     router.replace("/");
   };
 

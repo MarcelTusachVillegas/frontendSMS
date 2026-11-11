@@ -13,7 +13,7 @@ import type { Usuario } from "@/lib/api";
 import {
   getSesionPersistida,
   removeSesionPersistida,
-  setSesionPersistida
+  setSesionPersistida,
 } from "@/lib/token-store";
 
 type AuthContextValue = {
@@ -31,9 +31,9 @@ type AuthContextValue = {
     telefono: string;
     token: string;
     usuario: Usuario;
-  }) => void;
-  /** Cierra la sesión local (Cerrar Sesión del perfil). */
-  cerrarSesion: () => void;
+  }) => Promise<void>;
+  /** Cierra la sesión local (Cerrar Sesión del perfil). modificado recien revisar en caso de fallo */
+  cerrarSesion: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);

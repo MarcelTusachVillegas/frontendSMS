@@ -97,7 +97,7 @@ export default function HomeScreen() {
         telefonoPendiente,
         codigoOtp,
       );
-      iniciarSesion({ telefono: usuario.telefono, token, usuario });
+      await iniciarSesion({ telefono: usuario.telefono, token, usuario }); // se agrego un await, si falla quitarlo
       setModalVisible(false);
       setPaso("telefono");
       setCodigoOtp("");
@@ -140,7 +140,7 @@ export default function HomeScreen() {
         if (nextAppState === "active") {
           verificarEstadoPermiso();
         }
-      }
+      },
     );
 
     return () => {
@@ -189,7 +189,9 @@ export default function HomeScreen() {
 
           <ThemedText style={styles.description}>
             Analizamos tus mensajes para detectar fraudes (smishing).
-            Necesitamos tu número de teléfono y permiso para leer las notificaciones de tus apps de mensajería para avisarte de riesgos. Es seguro y privado.
+            Necesitamos tu número de teléfono y permiso para leer las
+            notificaciones de tus apps de mensajería para avisarte de riesgos.
+            Es seguro y privado.
           </ThemedText>
 
           {/* BOTÓN 1: Ingresar Número */}
@@ -396,7 +398,9 @@ export default function HomeScreen() {
                     { textAlign: "center", fontSize: 15 },
                   ]}
                 >
-                  Para protegerte de las estafas, necesitamos leer el contenido de las notificaciones de tus mensajes entrantes. Solo analizaremos los enlaces peligrosos para cuidarte.
+                  Para protegerte de las estafas, necesitamos leer el contenido
+                  de las notificaciones de tus mensajes entrantes. Solo
+                  analizaremos los enlaces peligrosos para cuidarte.
                   {"\n\n"}
                   ¿Autorizas el acceso a tus notificaciones?
                 </Text>
