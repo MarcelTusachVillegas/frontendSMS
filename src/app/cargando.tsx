@@ -1,6 +1,7 @@
+import { Image } from "expo-image";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { useAuth } from "@/context/auth-context";
 
@@ -16,18 +17,18 @@ export default function CargandoScreen() {
   if (!authReady || !tiempoCumplido) {
     return (
       <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#F5F6F8",
-        }}
+        style={styles.container}
       >
-        <ActivityIndicator size="large" color="#0d47a1" />
-        <Text style={{ marginTop: 16, fontSize: 18, fontWeight: "600" }}>
+        <Image
+          source={require("@/assets/images/logo-app.png")}
+          style={styles.logo}
+          contentFit="contain"
+        />
+        <ActivityIndicator size="large" color="#8EB69B" />
+        <Text style={styles.title}>
           AntiFraude SMS
         </Text>
-        <Text style={{ marginTop: 8, fontSize: 15, color: "#666666" }}>
+        <Text style={styles.subtitle}>
           {authReady ? "Preparando inicio..." : "Leyendo sesión guardada..."}
         </Text>
       </View>
@@ -40,3 +41,31 @@ export default function CargandoScreen() {
 
   return <Redirect href="/" />;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    padding: 24,
+  },
+  logo: {
+    width: 260,
+    height: 260,
+    maxWidth: "70%",
+    marginBottom: 24,
+  },
+  title: {
+    marginTop: 16,
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#163832",
+  },
+  subtitle: {
+    marginTop: 8,
+    fontSize: 15,
+    color: "#235347",
+    textAlign: "center",
+  },
+});

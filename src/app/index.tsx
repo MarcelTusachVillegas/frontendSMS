@@ -1,11 +1,11 @@
-import { AnimatedIcon } from "@/components/animated-icon";
 import { CodigoOtpInput } from "@/components/codigo-otp-input";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { WebBadge } from "@/components/web-badge";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { solicitarOtp, verificarOtp } from "@/lib/api";
+import { Image } from "expo-image";
 import { Redirect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -19,12 +19,15 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import RNAndroidNotificationListener from "react-native-android-notification-listener";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
+  const { height: screenHeight } = useWindowDimensions();
+  const compactLayout = screenHeight < 850;
   const router = useRouter();
   const { telefono: telefonoAutenticado, iniciarSesion, authReady } = useAuth();
 
@@ -174,20 +177,28 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            compactLayout && styles.scrollContentCompact,
+          ]}
           showsVerticalScrollIndicator={false}
+          scrollEnabled={compactLayout}
         >
-          <ThemedView style={styles.heroSection}>
-            <AnimatedIcon />
-            <ThemedText type="title" style={styles.title}>
+          <ThemedView style={[styles.heroSection, compactLayout && styles.heroSectionCompact]}>
+            <Image
+              source={require("@/assets/images/logo-app.png")}
+              contentFit="contain"
+              style={[styles.logo, compactLayout && styles.logoCompact]}
+            />
+            <ThemedText type="title" style={[styles.title, compactLayout && styles.titleCompact]}>
               Bienvenido a AntiFraude SMS
             </ThemedText>
-            <ThemedText style={styles.subtitle}>
+            <ThemedText style={[styles.subtitle, compactLayout && styles.subtitleCompact]}>
               Te protegemos de las estafas telefónicas.
             </ThemedText>
           </ThemedView>
 
-          <ThemedText style={styles.description}>
+          <ThemedText style={[styles.description, compactLayout && styles.descriptionCompact]}>
             Analizamos tus mensajes para detectar fraudes (smishing).
             Necesitamos tu número de teléfono y permiso para leer las
             notificaciones de tus apps de mensajería para avisarte de riesgos.
@@ -216,7 +227,7 @@ export default function HomeScreen() {
               styles.botonAbrir,
               {
                 backgroundColor:
-                  telefonoAutenticado === null ? "#cccccc" : "#2d6448",
+                  telefonoAutenticado === null ? "#8EB69B" : "#163832",
                 opacity: telefonoAutenticado === null ? 0.7 : 1,
               },
             ]}
@@ -226,7 +237,7 @@ export default function HomeScreen() {
             <Text
               style={[
                 styles.textoBoton,
-                { color: telefonoAutenticado === null ? "#666666" : "#fff" },
+                { color: telefonoAutenticado === null ? "#0B2B26" : "#DAF1DE" },
               ]}
             >
               CONCEDER ACCESO A NOTIFICACIONES
@@ -255,6 +266,7 @@ export default function HomeScreen() {
                   <TextInput
                     style={styles.inputRestringido}
                     placeholder="1234 5678"
+                    placeholderTextColor="#666666"
                     keyboardType="numeric"
                     maxLength={8}
                     value={telefonoIngresado}
@@ -292,8 +304,8 @@ export default function HomeScreen() {
                         {
                           color:
                             telefonoIngresado.length < 8 || cargando
-                              ? "#666666"
-                              : "#fff",
+                              ? "#0B2B26"
+                              : "#DAF1DE",
                         },
                       ]}
                     >
@@ -364,8 +376,8 @@ export default function HomeScreen() {
                         {
                           color:
                             codigoOtp.length < 6 || cargando
-                              ? "#666666"
-                              : "#fff",
+                              ? "#0B2B26"
+                              : "#DAF1DE",
                         },
                       ]}
                     >
@@ -417,7 +429,7 @@ export default function HomeScreen() {
                     style={[
                       styles.botonAlert,
                       styles.botonGuardar,
-                      { backgroundColor: "#2d6448" },
+                      { backgroundColor: "#163832" },
                     ]}
                     onPress={aceptarPermiso}
                   >
@@ -438,6 +450,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#235347",
   },
   safeArea: {
     flex: 1,
@@ -450,14 +463,41 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: Spacing.four,
-    paddingBottom: BottomTabInset + Spacing.three,
+    paddingVertical: Spacing.three,
     gap: Spacing.four,
   },
+  scrollContentCompact: {
+    justifyContent: "space-evenly",
+    paddingVertical: Spacing.two,
+    gap: Spacing.two,
+  },
   heroSection: {
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.two,
     width: "100%",
+  },
+  heroSectionCompact: {
+    gap: Spacing.one,
+  },
+  logo: {
+    width: 168,
+    height: 168,
+    borderRadius: 24,
+  },
+  logoCompact: {
+    width: 96,
+    height: 96,
+    borderRadius: 18,
+  },
+  titleCompact: {
+    fontSize: 30,
+    lineHeight: 34,
+  },
+  subtitleCompact: {
+    fontSize: 17,
+    lineHeight: 22,
   },
   title: {
     textAlign: "center",
@@ -469,22 +509,28 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 5,
   },
+  descriptionCompact: {
+    fontSize: 14,
+    lineHeight: 19,
+    marginBottom: 0,
+  },
   botonAbrir: {
-    backgroundColor: "#2d6448",
-    padding: 15,
+    backgroundColor: "#163832",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderRadius: 8,
     width: "80%",
     alignItems: "center",
-    marginBottom: 5,
+    marginBottom: 0,
   },
   textoBoton: {
-    color: "#fff",
+    color: "#DAF1DE",
     fontWeight: "bold",
     fontSize: 15,
   },
   textoInfo: {
     fontSize: 16,
-    color: "#a3a3a3",
+    color: "#8EB69B",
     marginBottom: 10,
   },
   fondoOscuro: {
@@ -495,7 +541,7 @@ const styles = StyleSheet.create({
   },
   cajaAlert: {
     width: "80%",
-    backgroundColor: "white",
+    backgroundColor: "#FFFFFF",
     borderRadius: 15,
     padding: 20,
     elevation: 5,
@@ -524,18 +570,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   botonCancelar: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F5F5F5",
     marginRight: 10,
   },
   botonGuardar: {
-    backgroundColor: "#2d6448",
+    backgroundColor: "#2D6448",
   },
   textoCancelar: {
-    color: "#666",
+    color: "#666666",
     fontWeight: "bold",
   },
   textoGuardar: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontWeight: "bold",
   },
   inputContainer: {
@@ -548,7 +594,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   prefijoCaja: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F5F5F5",
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderRightWidth: 1,
@@ -567,7 +613,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   cajaSimulada: {
-    backgroundColor: "#FFF8E1",
+    backgroundColor: "#DAF1DE",
     borderWidth: 1,
     borderColor: "#FFD54F",
     borderRadius: 10,

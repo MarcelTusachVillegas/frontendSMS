@@ -102,29 +102,31 @@ const glowKeyframe = new Keyframe({
   },
 });
 
-export function AnimatedIcon() {
+export function AnimatedIcon({ size = 128 }: { size?: number }) {
+  const glowSize = size * (201 / 128);
+  const imageScale = size / 128;
   return (
-    <View style={styles.iconContainer}>
+    <View style={[styles.iconContainer, { width: size, height: size }]}>
       <Animated.View
         entering={glowKeyframe.duration(60 * 1000 * 4)}
-        style={styles.glow}
+        style={[styles.glow, { width: glowSize, height: glowSize }]}
       >
         <Image
-          style={styles.glow}
+          style={[styles.glow, { width: glowSize, height: glowSize }]}
           source={require("@/assets/images/logo-glow.png")}
         />
       </Animated.View>
 
       <Animated.View
         entering={keyframe.duration(DURATION)}
-        style={styles.background}
+        style={[styles.background, { width: size, height: size, borderRadius: size * 0.31 }]}
       />
       <Animated.View
         style={styles.imageContainer}
         entering={logoKeyframe.duration(DURATION)}
       >
         <Image
-          style={styles.image}
+          style={[styles.image, { width: 76 * imageScale, height: 71 * imageScale }]}
           source={require("@/assets/images/escudo.png")}
         />
       </Animated.View>
