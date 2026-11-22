@@ -95,7 +95,7 @@ export default function PerfilScreen() {
             <View style={styles.expandedContent}>
               <Text style={styles.expandedText}>
                 Toda la información que procesamos se queda en tu teléfono.
-                AntiFraude SMS nunca venderá tus datos ni leerá tus mensajes
+                SMS Security nunca venderá tus datos ni leerá tus mensajes
                 personales, solo buscamos enlaces peligrosos (links) para
                 protegerte de posibles estafas.
               </Text>

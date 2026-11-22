@@ -26,7 +26,7 @@ export default function CargandoScreen() {
         />
         <ActivityIndicator size="large" color="#8EB69B" />
         <Text style={styles.title}>
-          AntiFraude SMS
+          SMS Security
         </Text>
         <Text style={styles.subtitle}>
           {authReady ? "Preparando inicio..." : "Leyendo sesión guardada..."}

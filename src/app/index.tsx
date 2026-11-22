@@ -191,7 +191,7 @@ export default function HomeScreen() {
               style={[styles.logo, compactLayout && styles.logoCompact]}
             />
             <ThemedText type="title" style={[styles.title, compactLayout && styles.titleCompact]}>
-              Bienvenido a AntiFraude SMS
+              Bienvenido a SMS Security
             </ThemedText>
             <ThemedText style={[styles.subtitle, compactLayout && styles.subtitleCompact]}>
               Te protegemos de las estafas telefónicas.

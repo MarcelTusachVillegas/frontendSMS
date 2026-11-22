@@ -120,9 +120,9 @@ export default function BandejaMensaje() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
           <Text style={{ color: "#136041", fontWeight: "bold" }}>
-            AntiFraude
+            SMS
           </Text>{" "}
-          SMS
+          Security
         </Text>
       </View>
 
