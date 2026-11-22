@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontendsms",
+    "name": "SMS Security",
     "slug": "frontendsms",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/logo-app.png"
+        "foregroundImage": "./assets/images/app-logo.png"
       },
       "permissions": [
         "android.permission.RECEIVE_SMS",
